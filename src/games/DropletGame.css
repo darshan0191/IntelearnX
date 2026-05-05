@@ -1,0 +1,169 @@
+/* ═══ Falling Droplet Game — warm sand theme ═══ */
+.dg-root {
+  position: relative;
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--r-2xl);
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  user-select: none;
+}
+
+/* ── HUD ── */
+.dg-hud {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 18px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border);
+  position: relative; z-index: 10;
+}
+.dg-hud-score {
+  font-size: 1rem; font-weight: 800; color: var(--accent);
+}
+.dg-hud-level {
+  font-size: 0.78rem; font-weight: 700;
+  background: var(--accent-muted); color: var(--accent-dark);
+  padding: 3px 10px; border-radius: var(--r-full);
+  border: 1px solid rgba(212,100,92,0.2);
+}
+.dg-hud-lives { font-size: 0.95rem; margin-left: auto; letter-spacing: 3px; }
+.dg-back-btn {
+  background: var(--bg-subtle); border: 1px solid var(--border);
+  color: var(--text-muted); border-radius: var(--r-md);
+  width: 30px; height: 30px; cursor: pointer; font-size: 0.85rem;
+  transition: all 0.18s;
+}
+.dg-back-btn:hover { background: var(--sand-300); color: var(--text); }
+
+/* ── Arena ── */
+.dg-arena {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: linear-gradient(180deg, #faf8f5 0%, #f3f0eb 100%);
+  /* graph paper grid matching site bg */
+  background-image:
+    linear-gradient(0deg, transparent 24%, #E1E1E1 25%, #E1E1E1 26%, transparent 27%,
+      transparent 74%, #E1E1E1 75%, #E1E1E1 76%, transparent 77%, transparent),
+    linear-gradient(90deg, transparent 24%, #E1E1E1 25%, #E1E1E1 26%, transparent 27%,
+      transparent 74%, #E1E1E1 75%, #E1E1E1 76%, transparent 77%, transparent);
+  background-size: 40px 40px;
+  background-color: #F7F6F3;
+}
+
+/* ── Question ── */
+.dg-question {
+  position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  width: 88%; max-width: 640px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--r-xl);
+  padding: 14px 20px;
+  text-align: center;
+  font-size: 0.98rem; font-weight: 600; color: var(--text);
+  z-index: 5;
+  box-shadow: var(--card-shadow);
+}
+
+/* ── Droplets ── */
+.dg-droplet {
+  position: absolute;
+  width: 86px; height: 86px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  font-size: 0.7rem; font-weight: 700; color: white;
+  line-height: 1.2; padding: 8px;
+  cursor: pointer; border: none;
+  background: linear-gradient(160deg, var(--accent) 0%, var(--accent-dark) 100%);
+  box-shadow: 0 4px 16px rgba(212,100,92,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: transform 0.12s, box-shadow 0.12s;
+  z-index: 6;
+  will-change: top;
+}
+.dg-droplet:hover:not(:disabled) {
+  transform: scale(1.1);
+  box-shadow: 0 6px 24px rgba(212,100,92,0.5);
+}
+.dg-droplet.dg-correct {
+  background: linear-gradient(160deg, var(--success), #059669);
+  box-shadow: 0 4px 20px rgba(76,175,130,0.5);
+  animation: dg-pop 0.4s ease;
+}
+.dg-droplet.dg-wrong {
+  background: linear-gradient(160deg, #ef4444, #b91c1c);
+  box-shadow: 0 4px 20px rgba(239,68,68,0.5);
+  animation: dg-shake 0.35s ease;
+}
+@keyframes dg-pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(0.9); opacity: 0.5; }
+}
+@keyframes dg-shake {
+  0%,100% { transform: translateX(0); }
+  25%     { transform: translateX(-5px); }
+  75%     { transform: translateX(5px); }
+}
+
+/* ── Ground ── */
+.dg-ground {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.4;
+}
+
+/* ── Feedback ── */
+.dg-feedback {
+  position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 1.4rem; font-weight: 800;
+  padding: 12px 28px; border-radius: var(--r-xl);
+  z-index: 20; pointer-events: none;
+  animation: dg-flash 0.75s ease forwards;
+}
+.dg-fb-correct {
+  background: rgba(76,175,130,0.12); color: var(--success);
+  border: 1px solid rgba(76,175,130,0.3);
+}
+.dg-fb-wrong {
+  background: rgba(212,100,92,0.1); color: var(--danger);
+  border: 1px solid rgba(212,100,92,0.25);
+}
+@keyframes dg-flash {
+  0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.8); }
+  25%  { opacity: 1; transform: translate(-50%,-50%) scale(1.05); }
+  75%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ── Screens ── */
+.dg-screen {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 32px; text-align: center;
+  background: var(--card);
+}
+.dg-screen-icon { font-size: 3rem; }
+.dg-screen h2 { font-family: var(--font-serif); font-size: 1.8rem; font-weight: 400; color: var(--text); margin: 0; }
+.dg-screen p  { font-size: 0.9rem; color: var(--text-secondary); margin: 0; max-width: 340px; }
+.dg-final-score { font-size: 1rem !important; color: var(--accent) !important; }
+.dg-rules {
+  display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+  font-size: 0.8rem; color: var(--text-muted);
+}
+.dg-start-btn {
+  padding: 12px 32px; border-radius: var(--r-xl); border: none; cursor: pointer;
+  font-size: 0.95rem; font-weight: 700;
+  background: var(--accent); color: white;
+  box-shadow: 0 4px 16px rgba(212,100,92,0.3);
+  transition: all 0.2s;
+}
+.dg-start-btn:hover { background: var(--accent-dark); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(212,100,92,0.4); }
+.dg-ghost-btn {
+  background: none; border: 1px solid var(--border);
+  color: var(--text-muted); padding: 8px 20px; border-radius: var(--r-lg);
+  cursor: pointer; font-size: 0.85rem; transition: all 0.18s;
+}
+.dg-ghost-btn:hover { border-color: var(--border-strong); color: var(--text); }
