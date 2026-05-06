@@ -17,6 +17,7 @@ import Games from './pages/Games';
 import CreateQuiz from './pages/CreateQuiz';
 import ManageQuizzes from './pages/ManageQuizzes';
 import TeacherQuizPlay from './pages/TeacherQuizPlay';
+import QuizHistory from './pages/QuizHistory';
 import SubjectSelectModal from './components/SubjectSelectModal';
 
 function ProtectedRoute({ children, roles }) {
@@ -128,6 +129,11 @@ function App() {
         <Route path="/teacher-quizzes" element={
           <ProtectedRoute roles={['student']}>
             <TeacherQuizPlay />
+          </ProtectedRoute>
+        } />
+        <Route path="/quiz-history" element={
+          <ProtectedRoute roles={['student']}>
+            <QuizHistory />
           </ProtectedRoute>
         } />
       </Route>

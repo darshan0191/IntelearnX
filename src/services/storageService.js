@@ -40,10 +40,21 @@ export async function getQuizHistory(uid) {
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 }
 
-export async function saveQuizResult(uid, result) {
+export async function saveQuizResult(uid, result, questions = []) {
   const quizRef = push(ref(db, `quizHistory/${uid}`));
+
+  // Store lightweight question data for history review
+  const questionData = questions.map(q => ({
+    question: q.question || '',
+    options: q.options || [],
+    correct: q.correct,
+    explanation: q.explanation || '',
+    difficulty: q.difficulty || '',
+  }));
+
   const quizResult = {
     ...result,
+    questions: questionData,
     timestamp: new Date().toISOString(),
   };
   await set(quizRef, quizResult);
