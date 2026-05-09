@@ -15,6 +15,7 @@ import {
 } from '../utils/dashboardInsights';
 import { generateReviewSuggestionsFromQuiz, domainIdToLabel } from '../services/personalizedQuizService';
 import SemanticSearch from '../components/SemanticSearch';
+import AiDoubtsAgent from '../components/AiDoubtsAgent';
 import './Dashboard.css';
 
 function RadarSkillTooltip({ active, payload }) {
@@ -404,6 +405,9 @@ export default function StudentDashboard() {
           )}
         </div>
       </div>
+
+      {/* ── Floating AI Doubts Agent ── */}
+      <AiDoubtsAgent userId={user?.id || ''} />
     </div>
   );
 }

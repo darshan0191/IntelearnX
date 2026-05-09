@@ -26,6 +26,7 @@ const ENGINEERING_KEYWORDS = [
   'compiler', 'interpreter', 'operating system', 'os', 'linux', 'unix',
   'kernel', 'thread', 'process', 'concurrency', 'parallelism',
   'object oriented', 'oop', 'oops', 'design pattern', 'solid',
+  'polymorphism', 'inheritance', 'encapsulation', 'abstraction',
   'clean code', 'refactoring', 'architecture', 'system design',
   'leetcode', 'competitive programming', 'cp',
 

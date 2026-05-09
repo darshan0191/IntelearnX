@@ -24,6 +24,17 @@ const GEMINI_EMBED_URL = `https://generativelanguage.googleapis.com/v1beta/model
 const embeddingCache = new Map();
 const MAX_CACHE = 500;
 
+/**
+ * Simple hash for cache keys — avoids collisions from slicing first N chars.
+ */
+function hashString(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+  }
+  return `h_${h}_${str.length}`;
+}
+
 // ─── Helpers ───
 
 function qdrantHeaders() {
@@ -47,6 +58,120 @@ function uuid() {
   });
 }
 
+// ─── Text Preprocessing ───
+
+/**
+ * Clean and normalize text before embedding or storing.
+ * Improves vector quality by removing noise and standardizing format.
+ */
+export function cleanTextForEmbedding(text) {
+  if (!text) return '';
+  let t = text;
+
+  // Fix broken hyphenated words (common in PDFs)
+  t = t.replace(/(\w)-\s*\n\s*(\w)/g, '$1$2');
+
+  // Normalize whitespace: collapse multiple spaces, trim lines
+  t = t.replace(/[ \t]+/g, ' ');
+  t = t.replace(/\n\s*\n/g, '\n\n');
+
+  // Fix missing spaces after punctuation
+  t = t.replace(/([.!?;:,])([A-Z])/g, '$1 $2');
+
+  // Fix duplicate punctuation
+  t = t.replace(/([.!?])\1+/g, '$1');
+
+  // Fix spaces before punctuation
+  t = t.replace(/\s+([.!?,;:)])/g, '$1');
+
+  // Normalize quotes (smart quotes → straight quotes)
+  t = t.replace(/[\u201C\u201D\u00AB\u00BB]/g, '"');
+  t = t.replace(/[\u2018\u2019\u2032\u2035]/g, "'");
+
+  // Remove stray non-printable characters
+  t = t.replace(/[^\x20-\x7E\n\r\t\u00A0-\u024F\u0370-\u03FF\u2000-\u22FF]/g, '');
+
+  return t.trim();
+}
+
+/**
+ * Expand a user query into semantic variants for multi-query search.
+ * Returns the original + reformulated queries to improve recall.
+ */
+function expandQuery(query) {
+  const q = query.trim();
+  const variants = [q];
+
+  // Add a question-form variant if not already a question
+  if (!q.endsWith('?')) {
+    variants.push(`What is ${q}?`);
+  }
+
+  // Add a definition-form variant
+  if (!q.toLowerCase().startsWith('define') && !q.toLowerCase().startsWith('what is')) {
+    variants.push(`${q} definition and explanation`);
+  }
+
+  // Add a keyword-focused variant (strip common words)
+  const stopWords = new Set(['what', 'is', 'the', 'a', 'an', 'of', 'in', 'for', 'to', 'and', 'or', 'how', 'does', 'do', 'can', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'this', 'that', 'these', 'those', 'with', 'from', 'about', 'which', 'when', 'where', 'why', 'explain', 'describe', 'tell', 'me']);
+  const keywords = q.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+  if (keywords.length >= 2) {
+    variants.push(keywords.join(' '));
+  }
+
+  return variants.slice(0, 3); // Max 3 variants to avoid too many API calls
+}
+
+/**
+ * Deduplicate search results by detecting overlapping text content.
+ * Keeps the higher-scored result when two chunks overlap significantly.
+ */
+function deduplicateResults(results, overlapThreshold = 0.6) {
+  if (results.length <= 1) return results;
+
+  const unique = [];
+  const usedTexts = [];
+
+  for (const r of results) {
+    const text = (r.payload?.text || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    if (!text || text.length < 20) continue;
+
+    // Check if this text significantly overlaps with any already-kept result
+    let isDuplicate = false;
+    for (const kept of usedTexts) {
+      const overlap = computeOverlap(text, kept);
+      if (overlap >= overlapThreshold) {
+        isDuplicate = true;
+        break;
+      }
+    }
+
+    if (!isDuplicate) {
+      unique.push(r);
+      usedTexts.push(text);
+    }
+  }
+
+  return unique;
+}
+
+/**
+ * Compute the ratio of overlapping words between two texts.
+ */
+function computeOverlap(textA, textB) {
+  const wordsA = new Set(textA.split(/\s+/).filter(w => w.length > 3));
+  const wordsB = new Set(textB.split(/\s+/).filter(w => w.length > 3));
+  if (wordsA.size === 0 || wordsB.size === 0) return 0;
+
+  let intersect = 0;
+  for (const w of wordsA) {
+    if (wordsB.has(w)) intersect++;
+  }
+
+  const smaller = Math.min(wordsA.size, wordsB.size);
+  return intersect / smaller;
+}
+
 // ─── Embedding ───
 
 /**
@@ -56,11 +181,12 @@ function uuid() {
 export async function embedText(text) {
   if (!GEMINI_API_KEY) throw new Error('Gemini API key not configured for embeddings.');
 
-  const trimmed = text.slice(0, 8000).trim();
+  // Clean and normalize whitespace before embedding for consistency
+  const trimmed = cleanTextForEmbedding(text).slice(0, 8000).replace(/\s+/g, ' ').trim();
   if (!trimmed) throw new Error('Cannot embed empty text.');
 
-  // Check cache
-  const cacheKey = trimmed.slice(0, 200);
+  // Check cache using hash to avoid collisions
+  const cacheKey = hashString(trimmed);
   if (embeddingCache.has(cacheKey)) return embeddingCache.get(cacheKey);
 
   const response = await fetch(`${GEMINI_EMBED_URL}?key=${GEMINI_API_KEY}`, {
@@ -122,7 +248,10 @@ export async function ensureCollection(collectionName) {
     headers: qdrantHeaders(),
   });
 
-  if (checkRes.ok) return true; // Already exists
+  if (checkRes.ok) {
+    // Already exists. We don't need to recreate.
+    return true;
+  }
 
   // Create
   const createRes = await fetch(`${QDRANT_URL}/collections/${collectionName}`, {
@@ -140,6 +269,17 @@ export async function ensureCollection(collectionName) {
     const err = await createRes.json().catch(() => ({}));
     throw new Error(err?.status?.error || `Failed to create collection: ${createRes.status}`);
   }
+
+  // Create necessary indexes for adjacent chunk retrieval
+  await fetch(`${QDRANT_URL}/collections/${collectionName}/index`, {
+    method: 'PUT', headers: qdrantHeaders(),
+    body: JSON.stringify({ field_name: 'chunkIndex', field_schema: 'integer' }),
+  }).catch(() => {});
+  
+  await fetch(`${QDRANT_URL}/collections/${collectionName}/index`, {
+    method: 'PUT', headers: qdrantHeaders(),
+    body: JSON.stringify({ field_name: 'fileName', field_schema: 'keyword' }),
+  }).catch(() => {});
 
   return true;
 }
@@ -193,7 +333,7 @@ export async function upsertPoints(collectionName, points) {
  * @param {object} [filter] - optional Qdrant filter object
  * @returns {Promise<Array<{id: string, score: number, payload: object}>>}
  */
-export async function semanticSearch(collectionName, queryText, limit = 5, filter = null) {
+export async function semanticSearch(collectionName, queryText, limit = 5, filter = null, scoreThreshold = 0.35) {
   if (!isConfigured()) return [];
 
   const queryVector = await embedText(queryText);
@@ -202,6 +342,7 @@ export async function semanticSearch(collectionName, queryText, limit = 5, filte
     vector: queryVector,
     limit,
     with_payload: true,
+    score_threshold: scoreThreshold,  // Filter out low-relevance noise at DB level
   };
   if (filter) body.filter = filter;
 
@@ -228,23 +369,102 @@ export async function semanticSearch(collectionName, queryText, limit = 5, filte
 // ─── Text Chunking ───
 
 /**
- * Split text into overlapping chunks for embedding.
+ * Split text into paragraph-aware, overlapping chunks for embedding.
+ * Preserves paragraph and sentence boundaries for more coherent context.
+ *
+ * Strategy:
+ *  1. Split on double-newlines (paragraph boundaries)
+ *  2. Merge small paragraphs together until maxChunkSize is reached
+ *  3. If a single paragraph exceeds maxChunkSize, split at sentence boundaries
+ *  4. Add overlap from the previous chunk's tail for continuity
+ *
  * @param {string} text - full document text
- * @param {number} chunkSize - characters per chunk (default 500)
- * @param {number} overlap - overlap between chunks (default 100)
+ * @param {number} maxChunkSize - max characters per chunk (default 1200)
+ * @param {number} overlap - overlap characters from previous chunk (default 200)
  * @returns {Array<{text: string, index: number}>}
  */
-export function chunkText(text, chunkSize = 500, overlap = 100) {
+export function chunkText(text, maxChunkSize = 1200, overlap = 200) {
+  if (!text || text.trim().length < 30) return [];
+
+  // Normalize whitespace while preserving paragraph breaks
+  const normalized = text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+
+  // Split into paragraphs (double newline)
+  const rawParagraphs = normalized.split(/\n\n+/);
+  const paragraphs = rawParagraphs.map(p => p.replace(/\s+/g, ' ').trim()).filter(p => p.length > 15);
+
+  if (paragraphs.length === 0) {
+    // Fallback: no clear paragraphs, use sentence-based splitting
+    return splitBySentences(normalized, maxChunkSize, overlap);
+  }
+
   const chunks = [];
-  let start = 0;
   let idx = 0;
-  while (start < text.length) {
-    const end = Math.min(start + chunkSize, text.length);
-    const chunk = text.slice(start, end).trim();
-    if (chunk.length > 20) {
-      chunks.push({ text: chunk, index: idx++ });
+  let currentChunk = '';
+  let prevTail = ''; // overlap from previous chunk
+
+  for (let i = 0; i < paragraphs.length; i++) {
+    const para = paragraphs[i];
+
+    // If a single paragraph is larger than maxChunkSize, split it at sentences
+    if (para.length > maxChunkSize) {
+      // Flush current buffer first
+      if (currentChunk.trim().length > 30) {
+        chunks.push({ text: (prevTail ? prevTail + '\n\n' : '') + currentChunk.trim(), index: idx++ });
+        prevTail = currentChunk.trim().slice(-overlap);
+        currentChunk = '';
+      }
+      // Split the long paragraph by sentences
+      const sentenceChunks = splitBySentences(para, maxChunkSize, overlap);
+      for (const sc of sentenceChunks) {
+        chunks.push({ text: (prevTail ? prevTail + ' ' : '') + sc.text, index: idx++ });
+        prevTail = sc.text.slice(-overlap);
+      }
+      continue;
     }
-    start += chunkSize - overlap;
+
+    // Would adding this paragraph exceed the limit?
+    const combined = currentChunk ? currentChunk + '\n\n' + para : para;
+    if (combined.length > maxChunkSize && currentChunk.trim().length > 30) {
+      // Flush the current chunk
+      chunks.push({ text: (prevTail ? prevTail + '\n\n' : '') + currentChunk.trim(), index: idx++ });
+      prevTail = currentChunk.trim().slice(-overlap);
+      currentChunk = para;
+    } else {
+      currentChunk = combined;
+    }
+  }
+
+  // Flush remaining
+  if (currentChunk.trim().length > 30) {
+    chunks.push({ text: (prevTail ? prevTail + '\n\n' : '') + currentChunk.trim(), index: idx++ });
+  }
+
+  return chunks;
+}
+
+/**
+ * Fallback: split text at sentence boundaries.
+ */
+function splitBySentences(text, maxChunkSize, overlap) {
+  // Split on sentence-ending punctuation followed by space or newline
+  const sentences = text.match(/[^.!?\n]+[.!?]+[\s]*/g) || [text];
+  const chunks = [];
+  let current = '';
+  let idx = 0;
+  let prevTail = '';
+
+  for (const sentence of sentences) {
+    if ((current + sentence).length > maxChunkSize && current.length > 30) {
+      chunks.push({ text: (prevTail ? prevTail + ' ' : '') + current.trim(), index: idx++ });
+      prevTail = current.trim().slice(-overlap);
+      current = sentence;
+    } else {
+      current += sentence;
+    }
+  }
+  if (current.trim().length > 30) {
+    chunks.push({ text: (prevTail ? prevTail + ' ' : '') + current.trim(), index: idx++ });
   }
   return chunks;
 }
@@ -252,7 +472,7 @@ export function chunkText(text, chunkSize = 500, overlap = 100) {
 // ─── High-Level Pipelines ───
 
 /**
- * Ingest a full document into Qdrant: chunk → embed → upsert.
+ * Ingest a full document into Qdrant: clean → chunk → embed → upsert.
  * @param {string} collectionName
  * @param {string} fullText - the full document text
  * @param {object} metadata - extra payload fields (e.g. { source: 'pdf', userId, fileName })
@@ -262,11 +482,14 @@ export function chunkText(text, chunkSize = 500, overlap = 100) {
 export async function ingestDocument(collectionName, fullText, metadata = {}, onProgress = null) {
   await ensureCollection(collectionName);
 
-  const chunks = chunkText(fullText);
+  // Pre-clean the full text before chunking
+  const cleanedText = cleanTextForEmbedding(fullText);
+  const chunks = chunkText(cleanedText);
   if (chunks.length === 0) throw new Error('No meaningful text chunks extracted.');
 
   const pointIds = [];
   const BATCH = 5; // Embed and upsert in batches of 5
+  const totalChunks = chunks.length;
 
   for (let i = 0; i < chunks.length; i += BATCH) {
     const batch = chunks.slice(i, i + BATCH);
@@ -278,6 +501,7 @@ export async function ingestDocument(collectionName, fullText, metadata = {}, on
       payload: {
         text: chunk.text,
         chunkIndex: chunk.index,
+        totalChunks,                     // Store total for adjacent retrieval
         ...metadata,
         ingestedAt: new Date().toISOString(),
       },
@@ -291,27 +515,204 @@ export async function ingestDocument(collectionName, fullText, metadata = {}, on
     }
   }
 
-  return { pointIds, totalChunks: chunks.length };
+  return { pointIds, totalChunks };
 }
 
 /**
- * RAG (Retrieval Augmented Generation) — search for relevant chunks, return as context string.
+ * RAG (Retrieval Augmented Generation) — multi-query search with deduplication.
+ *
+ * Improves accuracy over single-query search by:
+ *  1. Expanding the user query into semantic variants
+ *  2. Searching each variant against Qdrant
+ *  3. Merging and deduplicating results
+ *  4. Fetching adjacent chunks for fuller context
+ *
  * @param {string} collectionName
  * @param {string} query - the user's question or topic
  * @param {number} topK - how many chunks to retrieve
  * @param {object} [filter] - optional Qdrant payload filter
  * @returns {Promise<{context: string, results: Array}>}
  */
-export async function retrieveContext(collectionName, query, topK = 5, filter = null) {
-  const results = await semanticSearch(collectionName, query, topK, filter);
+export async function retrieveContext(collectionName, query, options = {}) {
+  const { topK = 5, filter = null, expand = true } = options;
 
-  const context = results
-    .filter((r) => r.score >= 0.3) // Only reasonably relevant results
+  // Step 1: Multi-query — optionally expand the query into variants for better recall
+  const queryVariants = expand ? expandQuery(query) : [query.trim()];
+
+  // Step 2: Pre-embed variants sequentially to avoid Gemini rate limits, then search in parallel
+  const vectors = [];
+  for (const q of queryVariants) {
+    try {
+      const v = await embedText(q);
+      vectors.push(v);
+    } catch (e) {
+      console.warn('Failed to embed variant:', q, e);
+    }
+  }
+
+  const searchPromises = vectors.map(queryVector => {
+    const body = {
+      vector: queryVector,
+      limit: topK,
+      with_payload: true,
+      score_threshold: 0.40,
+    };
+    if (filter) body.filter = filter;
+
+    return fetch(`${QDRANT_URL}/collections/${collectionName}/points/search`, {
+      method: 'POST',
+      headers: qdrantHeaders(),
+      body: JSON.stringify(body),
+    })
+    .then(r => r.ok ? r.json() : { result: [] })
+    .then(data => (data.result || []).map(r => ({
+      id: r.id, score: r.score, payload: r.payload || {},
+    })))
+    .catch(() => []);
+  });
+
+  const allResultArrays = await Promise.all(searchPromises);
+
+  // Step 3: Merge all results, keeping the highest score for each unique ID
+  const mergedMap = new Map();
+  for (const results of allResultArrays) {
+    for (const r of results) {
+      const existing = mergedMap.get(r.id);
+      if (!existing || r.score > existing.score) {
+        mergedMap.set(r.id, r);
+      }
+    }
+  }
+
+  // Step 4: Sort by score and apply quality threshold
+  let merged = Array.from(mergedMap.values())
+    .filter((r) => r.score >= 0.45)
+    .sort((a, b) => b.score - a.score);
+
+  // Step 5: Deduplicate overlapping text
+  merged = deduplicateResults(merged);
+
+  // Step 6: Take top K
+  merged = merged.slice(0, topK);
+
+  // Step 7: Fetch adjacent chunks for fuller context
+  const enrichedResults = await enrichWithAdjacentChunks(collectionName, merged, filter);
+
+  const context = enrichedResults
     .map((r) => r.payload.text || '')
     .filter(Boolean)
     .join('\n\n---\n\n');
 
-  return { context, results };
+  return { context, results: enrichedResults };
+}
+
+/**
+ * Fetch adjacent chunks (before/after) for results that have chunkIndex info.
+ * This gives fuller paragraph context instead of partial snippets.
+ */
+async function enrichWithAdjacentChunks(collectionName, results, filter) {
+  if (!isConfigured() || results.length === 0) return results;
+
+  const enriched = [];
+
+  for (const r of results) {
+    const chunkIdx = r.payload?.chunkIndex;
+    const totalChunks = r.payload?.totalChunks;
+    const fileName = r.payload?.fileName;
+
+    // Only attempt adjacent retrieval if we have chunk metadata
+    if (chunkIdx === undefined || !fileName) {
+      enriched.push(r);
+      continue;
+    }
+
+    // Look for adjacent chunks (chunkIndex ± 1) from the same file
+    const adjacentTexts = [r.payload.text || ''];
+
+    try {
+      // Fetch the previous chunk
+      if (chunkIdx > 0) {
+        const prevFilter = {
+          must: [
+            { key: 'fileName', match: { value: fileName } },
+            { key: 'chunkIndex', match: { value: chunkIdx - 1 } },
+          ],
+        };
+        const prevRes = await fetch(`${QDRANT_URL}/collections/${collectionName}/points/scroll`, {
+          method: 'POST',
+          headers: qdrantHeaders(),
+          body: JSON.stringify({ filter: prevFilter, limit: 1, with_payload: true }),
+        });
+        if (prevRes.ok) {
+          const prevData = await prevRes.json();
+          const prevText = prevData?.result?.points?.[0]?.payload?.text;
+          if (prevText) adjacentTexts.unshift(prevText);
+        }
+      }
+
+      // Fetch the next chunk
+      if (!totalChunks || chunkIdx < totalChunks - 1) {
+        const nextFilter = {
+          must: [
+            { key: 'fileName', match: { value: fileName } },
+            { key: 'chunkIndex', match: { value: chunkIdx + 1 } },
+          ],
+        };
+        const nextRes = await fetch(`${QDRANT_URL}/collections/${collectionName}/points/scroll`, {
+          method: 'POST',
+          headers: qdrantHeaders(),
+          body: JSON.stringify({ filter: nextFilter, limit: 1, with_payload: true }),
+        });
+        if (nextRes.ok) {
+          const nextData = await nextRes.json();
+          const nextText = nextData?.result?.points?.[0]?.payload?.text;
+          if (nextText) adjacentTexts.push(nextText);
+        }
+      }
+    } catch (e) {
+      // Adjacent retrieval is best-effort; don't fail the whole search
+      console.warn('Adjacent chunk retrieval failed:', e.message);
+    }
+
+    // Merge adjacent texts, deduplicating overlap regions
+    const fullText = mergeAdjacentTexts(adjacentTexts);
+
+    enriched.push({
+      ...r,
+      payload: {
+        ...r.payload,
+        text: fullText,
+      },
+    });
+  }
+
+  return enriched;
+}
+
+/**
+ * Merge adjacent text chunks, removing overlapping regions.
+ */
+function mergeAdjacentTexts(texts) {
+  if (texts.length <= 1) return texts[0] || '';
+
+  let merged = texts[0];
+  for (let i = 1; i < texts.length; i++) {
+    const next = texts[i];
+    // Find the longest overlap between the end of merged and start of next
+    let bestOverlap = 0;
+    const maxCheck = Math.min(merged.length, next.length, 300);
+    for (let len = 20; len <= maxCheck; len++) {
+      if (merged.slice(-len) === next.slice(0, len)) {
+        bestOverlap = len;
+      }
+    }
+    if (bestOverlap > 20) {
+      merged += next.slice(bestOverlap);
+    } else {
+      merged += '\n\n' + next;
+    }
+  }
+  return merged;
 }
 
 /**
@@ -327,14 +728,18 @@ export async function storeQuizKnowledge(userId, questions) {
 
   const points = [];
   for (const q of questions) {
-    const text = `Question: ${q.question}\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}`;
+    // Embed the question text separately for better retrieval precision.
+    // The full answer + explanation is stored in the payload for display.
+    const embeddingText = q.question + (q.explanation ? ' — ' + q.explanation : '');
+    const fullText = `Q: ${q.question}\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}`;
     try {
-      const vector = await embedText(text);
+      const vector = await embedText(embeddingText);
       points.push({
         id: uuid(),
         vector,
         payload: {
           userId,
+          text: fullText,  // Store full text for display in search results
           question: q.question,
           correctAnswer: q.correctAnswer,
           explanation: q.explanation,
@@ -367,7 +772,7 @@ export async function searchQuizKnowledge(query, userId = null, limit = 5) {
     ? { must: [{ key: 'userId', match: { value: userId } }] }
     : null;
 
-  const results = await semanticSearch('quiz_knowledge', query, limit, filter);
+  const results = await semanticSearch('quiz_knowledge', query, limit, filter, 0.40);
 
   return results.map((r) => ({
     score: r.score,
