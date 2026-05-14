@@ -866,3 +866,138 @@
   animation: sdSlideIn 0.5s var(--ease-out) backwards;
   animation-delay: 0.1s;
 }
+
+/* ═══ Suggestions Section (standalone) ═══ */
+.sd-suggestions-section {
+  margin-bottom: var(--s8);
+  animation: sdSlideIn 0.5s var(--ease-out) backwards;
+  animation-delay: 0.2s;
+}
+
+/* ═══ Growth & Activity Charts ═══ */
+.sd-growth-section {
+  margin-bottom: var(--s8);
+  animation: sdSlideIn 0.5s var(--ease-out) backwards;
+  animation-delay: 0.15s;
+}
+.sd-growth-title {
+  font-size: 1.1rem;
+  font-weight: 650;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin-bottom: var(--s5);
+}
+.sd-growth-title svg {
+  font-size: 1.15rem;
+  color: var(--accent);
+  opacity: 0.8;
+}
+
+.sd-growth-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s5);
+}
+
+/* trend chart spans full width */
+.sd-growth-chart--trend {
+  grid-column: 1 / -1;
+}
+
+.sd-growth-chart {
+  animation: sdSlideIn 0.5s var(--ease-out) backwards;
+}
+.sd-growth-chart--trend { animation-delay: 0.05s; }
+.sd-growth-chart--subjects { animation-delay: 0.1s; }
+.sd-growth-chart--difficulty { animation-delay: 0.15s; }
+
+.sd-growth-caption {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0 0 var(--s4);
+  line-height: 1.5;
+}
+
+.sd-growth-chart-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+/* Legend */
+.sd-growth-legend {
+  display: flex;
+  gap: var(--s5);
+  justify-content: center;
+  margin-top: var(--s4);
+  flex-wrap: wrap;
+}
+.sd-growth-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.sd-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-full);
+  flex-shrink: 0;
+}
+.sd-legend-dot--dashed {
+  border: 2px dashed;
+  border-color: inherit;
+  background: transparent !important;
+  border-color: #22d3ee;
+  width: 14px;
+  height: 0;
+  border-radius: 0;
+}
+
+/* Difficulty summary pills */
+.sd-difficulty-summary {
+  display: flex;
+  gap: var(--s3);
+  justify-content: center;
+  margin-top: var(--s4);
+  flex-wrap: wrap;
+}
+.sd-diff-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  padding: 5px 14px;
+}
+.sd-diff-pill strong {
+  font-weight: 700;
+  color: var(--text);
+}
+.sd-diff-pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dc, var(--accent));
+  flex-shrink: 0;
+}
+
+/* Tooltip extra lines */
+.sd-chart-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+@media (max-width: 768px) {
+  .sd-growth-grid {
+    grid-template-columns: 1fr;
+  }
+}
