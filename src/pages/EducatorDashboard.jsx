@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getClassStudents, getStudentPerformance, getAllUsers } from '../services/storageService';
-import { LuUsers, LuTarget, LuTrendingUp, LuTriangleAlert, LuZap, LuLoader, LuBookOpen, LuSparkles, LuFileStack } from 'react-icons/lu';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LuUsers, LuTarget, LuTrendingUp, LuTriangleAlert, LuZap, LuLoader, LuBookOpen, LuSparkles, LuFileStack, LuChartColumn, LuChartLine } from 'react-icons/lu';
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 import './Dashboard.css';
 
 export default function EducatorDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const [students, setStudents] = useState([]);
   const [classData, setClassData] = useState({
@@ -94,12 +95,17 @@ export default function EducatorDashboard() {
     boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
   };
 
-  // Per-student bar chart data
-  const studentChartData = classData.students.map(s => ({
-    name: s.name?.split(' ')[0] || 'Student',
-    accuracy: s.performance.overallAccuracy,
-    quizzes: s.performance.totalQuizzes,
-  }));
+  // Per-student chart data — Sorted by accuracy
+  const studentChartData = useMemo(() => {
+    return classData.students
+      .map(s => ({
+        name: s.name?.split(' ')[0] || 'Student',
+        fullName: s.name,
+        accuracy: s.performance.overallAccuracy,
+        quizzes: s.performance.totalQuizzes,
+      }))
+      .sort((a, b) => b.accuracy - a.accuracy);
+  }, [classData.students]);
 
   if (loading) {
     return (
@@ -203,17 +209,100 @@ export default function EducatorDashboard() {
 
       {/* Per-Student Performance Chart */}
       {studentChartData.length > 0 && (
-        <div className="chart-card" style={{ marginBottom: 'var(--s8)' }}>
-          <h3 className="chart-title">Student Performance Comparison</h3>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={studentChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
-                <XAxis dataKey="name" stroke="#B5AFA4" fontSize={12} />
-                <YAxis stroke="#B5AFA4" fontSize={12} domain={[0, 100]} />
-                <Tooltip contentStyle={chartTooltipStyle} />
-                <Bar dataKey="accuracy" fill="#D4645C" radius={[4, 4, 0, 0]} name="Accuracy %" />
-              </BarChart>
+        <div className="chart-card premium-chart-card" style={{ marginBottom: 'var(--s8)' }}>
+          <div className="chart-header">
+            <h3 className="chart-title">
+              <LuChartColumn /> Student Performance Comparison
+            </h3>
+            <div className="chart-legend-custom">
+              <span className="legend-item"><LuChartColumn style={{ color: '#D4645C' }} /> Accuracy</span>
+              <span className="legend-item"><LuChartLine style={{ color: '#a78bfa' }} /> Quizzes Taken</span>
+            </div>
+          </div>
+          <p className="chart-subtitle">Analyzing individual accuracy vs. total engagement (quizzes completed).</p>
+          
+          <div className="chart-container" style={{ height: '350px', marginTop: 'var(--s6)' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={studentChartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#D4645C" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#D4645C" stopOpacity={0.7} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="var(--text-muted)" 
+                  fontSize={11} 
+                  tickLine={false}
+                  axisLine={{ stroke: 'var(--card-border)' }}
+                />
+                <YAxis 
+                  yAxisId="left"
+                  stroke="var(--text-muted)" 
+                  fontSize={11} 
+                  domain={[0, 100]} 
+                  tickFormatter={(v) => `${v}%`}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis 
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="#a78bfa" 
+                  fontSize={11} 
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => `${v} Qs`}
+                />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="custom-chart-tooltip">
+                          <p className="tooltip-label">{data.fullName}</p>
+                          <div className="tooltip-stats">
+                            <div className="t-stat">
+                              <span className="t-dot" style={{ background: '#D4645C' }} />
+                              <span className="t-name">Accuracy:</span>
+                              <strong className="t-val">{data.accuracy}%</strong>
+                            </div>
+                            <div className="t-stat">
+                              <span className="t-dot" style={{ background: '#a78bfa' }} />
+                              <span className="t-name">Quizzes:</span>
+                              <strong className="t-val">{data.quizzes}</strong>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar 
+                  yAxisId="left"
+                  dataKey="accuracy" 
+                  fill="url(#barGradient)" 
+                  radius={[6, 6, 0, 0]} 
+                  barSize={32}
+                >
+                  {studentChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fillOpacity={0.8 + (entry.accuracy / 200)} />
+                  ))}
+                </Bar>
+                <Line 
+                  yAxisId="right"
+                  type="monotone" 
+                  dataKey="quizzes" 
+                  stroke="#a78bfa" 
+                  strokeWidth={3} 
+                  dot={{ r: 4, fill: '#a78bfa', strokeWidth: 2, stroke: '#1a1a1a' }}
+                  activeDot={{ r: 6, strokeWidth: 0 }}
+                />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -227,7 +316,12 @@ export default function EducatorDashboard() {
         {classData.students.length > 0 ? (
           <div className="student-list">
             {classData.students.map(student => (
-              <div key={student.id} className="student-row">
+              <div 
+                key={student.id} 
+                className="student-row clickable-row"
+                onClick={() => navigate(`/educator/student/${student.id}`)}
+                title="Click to view detailed insights"
+              >
                 <div className="student-row-info">
                   <div className="student-row-avatar">{student.avatar}</div>
                   <div>
@@ -240,10 +334,13 @@ export default function EducatorDashboard() {
                   <span><LuTrendingUp /> {student.performance.totalQuizzes} quizzes</span>
                   <span><LuZap /> {student.xp || 0} XP</span>
                   {student.performance.weakAreas.length > 0 && (
-                    <span style={{ color: 'var(--warning)' }}>
+                    <span style={{ color: '#E0A546' }}>
                       <LuTriangleAlert /> {student.performance.weakAreas.length} weak areas
                     </span>
                   )}
+                </div>
+                <div className="student-row-action">
+                  <LuSparkles /> <span>View Insights</span>
                 </div>
               </div>
             ))}

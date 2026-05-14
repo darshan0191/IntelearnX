@@ -39,23 +39,27 @@ export default function Sidebar({ isOpen, onClose }) {
       <nav className="sidebar-nav">
         <span className="sidebar-section-title">Main</span>
 
-        <NavLink
-          to={isStudent ? '/student-dashboard' : '/educator-dashboard'}
-          className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-          onClick={onClose}
-        >
-          <LuLayoutDashboard />
-          <span>Dashboard</span>
-        </NavLink>
+        {isStudent && (
+          <NavLink
+            to="/student-dashboard"
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={onClose}
+          >
+            <LuLayoutDashboard />
+            <span>Dashboard</span>
+          </NavLink>
+        )}
 
-        <NavLink
-          to="/quiz/select"
-          className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-          onClick={onClose}
-        >
-          <LuBookOpen />
-          <span>Take Quiz</span>
-        </NavLink>
+        {isStudent && (
+          <NavLink
+            to="/quiz/select"
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={onClose}
+          >
+            <LuBookOpen />
+            <span>Take Quiz</span>
+          </NavLink>
+        )}
 
         <NavLink
           to="/pdf-quiz"
@@ -113,10 +117,9 @@ export default function Sidebar({ isOpen, onClose }) {
           </NavLink>
         )}
 
-        <span className="sidebar-section-title">Career</span>
-
         {isStudent && (
           <>
+            <span className="sidebar-section-title">Career</span>
             <NavLink
               to="/resume-builder"
               className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
