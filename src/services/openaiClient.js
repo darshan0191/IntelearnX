@@ -20,7 +20,7 @@ const FALLBACK_MODEL = 'gemini-2.5-flash-lite';
 // ─── Global State ───
 
 /** Minimum ms between API calls */
-const MIN_INTERVAL_MS = 2500;
+const MIN_INTERVAL_MS = 4000;
 let lastCallTime = 0;
 
 /** Global cooldown until this timestamp (set after a 429) */

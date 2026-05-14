@@ -262,8 +262,8 @@ export async function generateTheoryBank(files, onProgress = null) {
 
   // Decide how many batches and questions per batch
   const TARGET_QUESTIONS = 100;
-  // Use up to 10 batches for better question quality (approx 10 questions per batch)
-  const numBatches = Math.min(chunks.length, 10);
+  // Use fewer, larger batches to avoid 429 rate limits on Gemini free tier
+  const numBatches = Math.min(chunks.length, 4); 
   const questionsPerBatch = Math.ceil(TARGET_QUESTIONS / numBatches);
 
   // Distribute chunks across batches
