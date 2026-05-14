@@ -177,6 +177,11 @@ function cleanExtractedText(text) {
  * Build the quiz generation prompt
  */
 function buildPrompt(text, config, isRag = false) {
+  // Route to theory prompt if quiz type is theory
+  if (config.quizType === 'theory') {
+    return buildTheoryPrompt(text, config, isRag);
+  }
+
   const difficultyGuide = {
     easy: 'basic recall and simple understanding',
     medium: 'application and analysis of concepts',
@@ -189,7 +194,6 @@ function buildPrompt(text, config, isRag = false) {
     mixed: 'a mix of multiple choice and true/false questions',
   };
 
-  // When using RAG, we already have focused context; otherwise limit to ~10000 chars
   const trimmedText = isRag ? text : (text.length > 10000 ? text.substring(0, 10000) : text);
 
   const sourceNote = isRag
@@ -233,6 +237,58 @@ Generate the quiz now. Return ONLY the JSON object:`;
 }
 
 /**
+ * Build prompt for theory/descriptive questions
+ */
+function buildTheoryPrompt(text, config, isRag = false) {
+  const difficultyGuide = {
+    easy: 'definition-based and straightforward explanation questions',
+    medium: 'questions requiring comparison, analysis, or multi-step explanation',
+    hard: 'questions requiring deep critical thinking, design reasoning, or evaluation of trade-offs',
+  };
+
+  const trimmedText = isRag ? text : (text.length > 10000 ? text.substring(0, 10000) : text);
+
+  const sourceNote = isRag
+    ? 'The text below are the most relevant excerpts retrieved from a larger document using semantic search (RAG). Base all questions ONLY on these excerpts.'
+    : 'Generate theory questions ONLY from the provided document text below.';
+
+  return `You are a precise theory question generator focused on engineering education. ${sourceNote}
+
+IMPORTANT: Only generate questions from engineering-related content (CS, ECE, Mechanical, Civil, Software Engineering, etc.). If the document is clearly non-engineering, respond with: {"error":"out_of_domain","message":"${OUT_OF_DOMAIN_SHORT}"}
+
+STRICT RULES:
+1. Generate exactly ${config.numQuestions || 5} theory/descriptive questions.
+2. Difficulty level: ${config.difficulty || 'medium'} — focus on ${difficultyGuide[config.difficulty] || difficultyGuide.medium}.
+3. Each question should require a detailed, descriptive answer (3-6 sentences minimum).
+4. Questions should start with "Explain", "Describe", "Compare", "Discuss", "Analyze", "What is", "How does", "Why is", etc.
+5. The modelAnswer must be a comprehensive, well-structured descriptive answer (4-8 sentences).
+6. Include key points that a good answer should cover.
+7. Questions must come ONLY from the document text. Do NOT use outside knowledge.
+8. Do NOT hallucinate facts not present in the document.
+9. Return ONLY valid JSON. No markdown fences, no extra text.
+
+REQUIRED JSON FORMAT:
+{
+  "title": "Theory Questions on [document topic]",
+  "sourceSummary": "Brief 1-2 sentence summary of the document",
+  "questionType": "theory",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Explain the concept of X and its significance in Y.",
+      "modelAnswer": "Detailed descriptive model answer here covering all key points. This should be 4-8 sentences explaining the concept thoroughly.",
+      "keyPoints": ["Key point 1", "Key point 2", "Key point 3"]
+    }
+  ]
+}
+
+DOCUMENT TEXT:
+${trimmedText}
+
+Generate the theory questions now. Return ONLY the JSON object:`;
+}
+
+/**
  * Parse and validate the LLM response
  */
 function parseLLMResponse(responseText) {
@@ -271,16 +327,30 @@ function parseLLMResponse(responseText) {
     throw new Error('No questions generated');
   }
 
-  // Validate & fix each question
-  data.questions.forEach((q, i) => {
-    q.id = i + 1;
-    const required = ['question', 'options', 'correctAnswer', 'explanation'];
-    for (const field of required) {
-      if (!q[field]) throw new Error(`Question ${i + 1} missing '${field}'`);
-    }
-    if (q.options.length !== 4) throw new Error(`Question ${i + 1} must have 4 options`);
-    if (!q.options.includes(q.correctAnswer)) q.correctAnswer = q.options[0];
-  });
+  // Check if this is a theory quiz
+  const isTheory = data.questionType === 'theory' || (data.questions[0] && data.questions[0].modelAnswer && !data.questions[0].options);
+
+  if (isTheory) {
+    // Validate theory questions
+    data.questionType = 'theory';
+    data.questions.forEach((q, i) => {
+      q.id = i + 1;
+      if (!q.question) throw new Error(`Question ${i + 1} missing 'question'`);
+      if (!q.modelAnswer) throw new Error(`Question ${i + 1} missing 'modelAnswer'`);
+      if (!q.keyPoints) q.keyPoints = [];
+    });
+  } else {
+    // Validate MCQ/TF questions
+    data.questions.forEach((q, i) => {
+      q.id = i + 1;
+      const required = ['question', 'options', 'correctAnswer', 'explanation'];
+      for (const field of required) {
+        if (!q[field]) throw new Error(`Question ${i + 1} missing '${field}'`);
+      }
+      if (q.options.length !== 4) throw new Error(`Question ${i + 1} must have 4 options`);
+      if (!q.options.includes(q.correctAnswer)) q.correctAnswer = q.options[0];
+    });
+  }
 
   data.title = data.title || 'Generated Quiz';
   data.sourceSummary = data.sourceSummary || 'Quiz generated from uploaded document.';

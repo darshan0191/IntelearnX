@@ -3,11 +3,14 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getPerformanceData, getQuizHistory } from '../services/storageService';
 import {
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip,
+  ResponsiveContainer, Tooltip,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  BarChart, Bar, Cell,
 } from 'recharts';
 import {
   LuTarget, LuTrophy, LuZap, LuFlame, LuBookOpen, LuTriangleAlert,
   LuLoader, LuSparkles, LuCompass, LuLightbulb, LuRoute, LuStar,
+  LuTrendingUp, LuChartNoAxesColumn, LuSignal,
 } from 'react-icons/lu';
 import {
   getKeywordRadarRows,
@@ -15,7 +18,6 @@ import {
 } from '../utils/dashboardInsights';
 import { generateReviewSuggestionsFromQuiz, domainIdToLabel } from '../services/personalizedQuizService';
 import SemanticSearch from '../components/SemanticSearch';
-import AiDoubtsAgent from '../components/AiDoubtsAgent';
 import './Dashboard.css';
 
 function RadarSkillTooltip({ active, payload }) {
@@ -32,6 +34,44 @@ function RadarSkillTooltip({ active, payload }) {
     </div>
   );
 }
+
+function TrendTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="sd-chart-tooltip">
+      <strong>{d.name} · {d.date}</strong>
+      <span>Accuracy: {d.accuracy}%</span>
+      <span>Cumulative: {d.cumulative}%</span>
+      {d.subject && <span style={{ opacity: 0.6 }}>{d.subject}</span>}
+    </div>
+  );
+}
+
+function SubjectTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="sd-chart-tooltip">
+      <strong>{d.fullName}</strong>
+      <span>Accuracy: {d.accuracy}%</span>
+      <span>Questions: {d.quizzes}</span>
+    </div>
+  );
+}
+
+function DifficultyTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="sd-chart-tooltip">
+      <strong>{d.name} Difficulty</strong>
+      <span>Accuracy: {d.accuracy}%</span>
+      <span>Correct: {d.correct} / {d.total}</span>
+    </div>
+  );
+}
+
 
 const defaultPerformance = {
   totalQuizzes: 0,
@@ -141,6 +181,62 @@ export default function StudentDashboard() {
       cancelled = true;
     };
   }, [user, performance]);
+
+  // ── Chart data: Accuracy Trend ──
+  const accuracyTrendData = useMemo(() => {
+    if (!history || history.length === 0) return [];
+    const sorted = [...history].reverse();
+    let cumulativeCorrect = 0;
+    let cumulativeTotal = 0;
+    return sorted.map((quiz, idx) => {
+      const accuracy = quiz.totalQuestions > 0
+        ? Math.round((quiz.correctAnswers / quiz.totalQuestions) * 100)
+        : 0;
+      cumulativeCorrect += quiz.correctAnswers || 0;
+      cumulativeTotal += quiz.totalQuestions || 0;
+      const cumAccuracy = cumulativeTotal > 0
+        ? Math.round((cumulativeCorrect / cumulativeTotal) * 100)
+        : 0;
+      const dateStr = new Date(quiz.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return {
+        name: `Q${idx + 1}`,
+        date: dateStr,
+        accuracy,
+        cumulative: cumAccuracy,
+        subject: quiz.subject || quiz.topic || '',
+      };
+    });
+  }, [history]);
+
+  // ── Chart data: Subject Performance ──
+  const subjectChartData = useMemo(() => {
+    const sa = performance?.subjectAccuracy || {};
+    return Object.entries(sa)
+      .filter(([, v]) => v && v.total > 0)
+      .map(([name, v]) => ({
+        name: name.length > 18 ? name.slice(0, 16) + '…' : name,
+        fullName: name,
+        accuracy: Math.round((v.correct / v.total) * 100),
+        quizzes: v.total,
+      }))
+      .sort((a, b) => b.accuracy - a.accuracy);
+  }, [performance?.subjectAccuracy]);
+
+  // ── Chart data: Difficulty Breakdown ──
+  const difficultyChartData = useMemo(() => {
+    const db = performance?.difficultyBreakdown || {};
+    return ['easy', 'medium', 'hard']
+      .filter(d => db[d] && db[d].total > 0)
+      .map(d => ({
+        name: d.charAt(0).toUpperCase() + d.slice(1),
+        accuracy: Math.round((db[d].correct / db[d].total) * 100),
+        correct: db[d].correct,
+        total: db[d].total,
+      }));
+  }, [performance?.difficultyBreakdown]);
+
+  const DIFFICULTY_COLORS = { Easy: '#4CAF82', Medium: '#E0A546', Hard: '#D4645C' };
+  const SUBJECT_COLORS = ['#a78bfa', '#5B9BD5', '#4CAF82', '#E0A546', '#D4645C', '#22d3ee', '#f472b6'];
 
   if (loading || !performance) {
     return (
@@ -296,67 +392,175 @@ export default function StudentDashboard() {
 
       </div>
 
-      <section className="sd-main-grid">
-        <div className="sd-radar-column">
-          <div className="chart-card sd-radar-card sd-radar-card--domain">
-            <div className="sd-radar-head">
-              <h3 className="chart-title sd-radar-title">
-                <LuTarget /> Your keywords
+      {/* ── Growth & Activity Charts ── */}
+      {hasQuizActivity && (
+        <section className="sd-growth-section">
+          <h2 className="sd-growth-title">
+            <LuTrendingUp /> Growth & Activity
+          </h2>
+
+          <div className="sd-growth-grid">
+            {/* ─ Accuracy Trend Chart ─ */}
+            <div className="chart-card sd-growth-chart sd-growth-chart--trend">
+              <h3 className="chart-title">
+                <LuTrendingUp /> Accuracy Trend
               </h3>
-              <p className="sd-radar-caption">
-                {showKeywordRadar
-                  ? `Corners come from the keywords you entered before the first quiz (use commas to separate). ${keywordSignals > 0 ? `${keywordSignals} with a score signal.` : ''} Matches to quiz topics refine each spoke.`
-                  : 'Add keywords when you build your first quiz—each phrase can become a corner (split with commas).'}
-              </p>
-            </div>
-            <div className="sd-radar-chart-wrap sd-radar-chart-wrap--compact">
-              {showKeywordRadar ? (
-                <ResponsiveContainer width="100%" height={320}>
-                  <RadarChart data={keywordRadarRows} cx="50%" cy="52%" outerRadius="78%">
+              <p className="sd-growth-caption">Quiz-by-quiz accuracy with your cumulative average.</p>
+              <div className="sd-growth-chart-wrap">
+                <ResponsiveContainer width="100%" height={260}>
+                  <AreaChart data={accuracyTrendData} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
                     <defs>
-                      <linearGradient id="sdRadarFillFocus" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor="#a78bfa" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.2} />
+                      <linearGradient id="sdAccGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#a78bfa" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#a78bfa" stopOpacity={0.02} />
+                      </linearGradient>
+                      <linearGradient id="sdCumGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#22d3ee" stopOpacity={0.01} />
                       </linearGradient>
                     </defs>
-                    <PolarGrid stroke="var(--border)" strokeDasharray="3 6" />
-                    <PolarAngleAxis
-                      dataKey="skill"
-                      tick={{ fill: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }}
+                    <CartesianGrid stroke="var(--border)" strokeDasharray="3 6" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
                       tickLine={false}
+                      axisLine={{ stroke: 'var(--border)' }}
                     />
-                    <PolarRadiusAxis
-                      angle={90}
+                    <YAxis
                       domain={[0, 100]}
-                      tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
-                      tickCount={5}
-                      stroke="var(--border)"
+                      tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={v => `${v}%`}
                     />
-                    <Tooltip content={<RadarSkillTooltip />} />
-                    <Radar
+                    <Tooltip content={<TrendTooltip />} />
+                    <Area
+                      type="monotone"
                       dataKey="accuracy"
                       stroke="#a78bfa"
                       strokeWidth={2.5}
-                      fill="url(#sdRadarFillFocus)"
-                      fillOpacity={1}
-                      dot={{ r: 4, fill: '#a78bfa', strokeWidth: 0 }}
+                      fill="url(#sdAccGrad)"
+                      dot={{ r: 3.5, fill: '#a78bfa', strokeWidth: 0 }}
+                      activeDot={{ r: 6, fill: '#a78bfa', stroke: '#1a1a1a', strokeWidth: 2 }}
+                      name="Quiz Accuracy"
                       isAnimationActive
-                      animationDuration={900}
-                      animationEasing="ease-out"
+                      animationDuration={800}
                     />
-                  </RadarChart>
+                    <Area
+                      type="monotone"
+                      dataKey="cumulative"
+                      stroke="#22d3ee"
+                      strokeWidth={1.8}
+                      strokeDasharray="5 3"
+                      fill="url(#sdCumGrad)"
+                      dot={false}
+                      name="Cumulative Avg"
+                      isAnimationActive
+                      animationDuration={1000}
+                    />
+                  </AreaChart>
                 </ResponsiveContainer>
+              </div>
+              <div className="sd-growth-legend">
+                <span className="sd-growth-legend-item"><span className="sd-legend-dot" style={{ background: '#a78bfa' }} /> Quiz Accuracy</span>
+                <span className="sd-growth-legend-item"><span className="sd-legend-dot sd-legend-dot--dashed" style={{ background: '#22d3ee' }} /> Cumulative Avg</span>
+              </div>
+            </div>
+
+            {/* ─ Subject Performance ─ */}
+            <div className="chart-card sd-growth-chart sd-growth-chart--subjects">
+              <h3 className="chart-title">
+                <LuChartNoAxesColumn /> Subject Performance
+              </h3>
+              <p className="sd-growth-caption">Accuracy by subject across all your quizzes.</p>
+              {subjectChartData.length > 0 ? (
+                <div className="sd-growth-chart-wrap">
+                  <ResponsiveContainer width="100%" height={Math.max(180, subjectChartData.length * 48 + 30)}>
+                    <BarChart data={subjectChartData} layout="vertical" margin={{ top: 4, right: 30, bottom: 4, left: 8 }}>
+                      <CartesianGrid stroke="var(--border)" strokeDasharray="3 6" horizontal={false} />
+                      <XAxis
+                        type="number"
+                        domain={[0, 100]}
+                        tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={{ stroke: 'var(--border)' }}
+                        tickFormatter={v => `${v}%`}
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        width={110}
+                        tick={{ fill: 'var(--text-secondary)', fontSize: 11, fontWeight: 500 }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip content={<SubjectTooltip />} cursor={{ fill: 'rgba(201,168,76,0.06)' }} />
+                      <Bar dataKey="accuracy" radius={[0, 6, 6, 0]} barSize={22} isAnimationActive animationDuration={800}>
+                        {subjectChartData.map((entry, idx) => (
+                          <Cell key={entry.name} fill={SUBJECT_COLORS[idx % SUBJECT_COLORS.length]} fillOpacity={0.85} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               ) : (
-                <div className="sd-radar-empty glass-card">
-                  <p className="sd-muted">Complete onboarding and add at least one keyword (comma-separated for several corners).</p>
-                  <Link to="/quiz/select" className="btn btn-primary btn-sm">Start setup quiz</Link>
+                <p className="sd-muted">Complete quizzes across different subjects to see your breakdown.</p>
+              )}
+            </div>
+
+            {/* ─ Difficulty Breakdown ─ */}
+            <div className="chart-card sd-growth-chart sd-growth-chart--difficulty">
+              <h3 className="chart-title">
+                <LuSignal /> Difficulty Breakdown
+              </h3>
+              <p className="sd-growth-caption">How you perform at each difficulty level.</p>
+              {difficultyChartData.length > 0 ? (
+                <div className="sd-growth-chart-wrap">
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={difficultyChartData} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
+                      <CartesianGrid stroke="var(--border)" strokeDasharray="3 6" vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fill: 'var(--text-secondary)', fontSize: 12, fontWeight: 600 }}
+                        tickLine={false}
+                        axisLine={{ stroke: 'var(--border)' }}
+                      />
+                      <YAxis
+                        domain={[0, 100]}
+                        tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={v => `${v}%`}
+                      />
+                      <Tooltip content={<DifficultyTooltip />} cursor={{ fill: 'rgba(201,168,76,0.06)' }} />
+                      <Bar dataKey="accuracy" radius={[6, 6, 0, 0]} barSize={48} isAnimationActive animationDuration={800}>
+                        {difficultyChartData.map(entry => (
+                          <Cell key={entry.name} fill={DIFFICULTY_COLORS[entry.name] || '#a78bfa'} fillOpacity={0.85} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <p className="sd-muted">No difficulty data available yet.</p>
+              )}
+              {difficultyChartData.length > 0 && (
+                <div className="sd-difficulty-summary">
+                  {difficultyChartData.map(d => (
+                    <div key={d.name} className="sd-diff-pill" style={{ '--dc': DIFFICULTY_COLORS[d.name] }}>
+                      <span className="sd-diff-pill-dot" />
+                      <span>{d.name}</span>
+                      <strong>{d.correct}/{d.total}</strong>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
           </div>
-        </div>
+        </section>
+      )}
 
-        <div className="sd-insights-stack">
+      <section className="sd-suggestions-section">
           <div className="glass-card sd-suggestions-card sd-suggestions-card--single">
             <h3 className="card-title sd-card-title">
               <LuLightbulb /> Suggestions
@@ -380,7 +584,6 @@ export default function StudentDashboard() {
               ))}
             </ul>
           </div>
-        </div>
       </section>
 
       <div className="dashboard-bottom sd-bottom sd-bottom--single">
@@ -405,9 +608,6 @@ export default function StudentDashboard() {
           )}
         </div>
       </div>
-
-      {/* ── Floating AI Doubts Agent ── */}
-      <AiDoubtsAgent userId={user?.id || ''} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { generateQuizFromPdf } from '../services/pdfQuizService';
 import {
   LuUpload, LuFileText, LuX, LuLoader, LuCircleCheck, LuCircleX,
   LuArrowRight, LuRotateCcw, LuSparkles, LuGauge, LuHash, LuBrain,
+  LuPenLine, LuEye, LuChevronDown, LuChevronUp,
 } from 'react-icons/lu';
 import { LuLayoutDashboard } from 'react-icons/lu';
 import './PdfQuiz.css';
@@ -25,7 +26,9 @@ export default function PdfQuiz() {
   const [config, setConfig] = useState({ numQuestions: 5, difficulty: 'medium', quizType: 'mcq' });
   const [quiz, setQuiz] = useState(null);
   const [answers, setAnswers] = useState({});
+  const [theoryAnswers, setTheoryAnswers] = useState({});
   const [showFeedback, setShowFeedback] = useState({});
+  const [showModelAnswer, setShowModelAnswer] = useState({});
   const [currentQ, setCurrentQ] = useState(0);
   const [error, setError] = useState('');
   const [progressMsg, setProgressMsg] = useState('');
@@ -79,11 +82,17 @@ export default function PdfQuiz() {
     }
   };
 
-  // ── Answer question ──
+  // ── Answer MCQ question ──
   const handleAnswer = (questionId, option) => {
-    if (showFeedback[questionId]) return; // Already answered
+    if (showFeedback[questionId]) return;
     setAnswers((prev) => ({ ...prev, [questionId]: option }));
     setShowFeedback((prev) => ({ ...prev, [questionId]: true }));
+  };
+
+  // ── Submit theory answer ──
+  const handleTheorySubmit = (questionId) => {
+    setShowFeedback((prev) => ({ ...prev, [questionId]: true }));
+    setShowModelAnswer((prev) => ({ ...prev, [questionId]: true }));
   };
 
   const goNext = () => {
@@ -97,11 +106,17 @@ export default function PdfQuiz() {
   // ── Calculate results ──
   const getResults = () => {
     if (!quiz) return { correct: 0, total: 0, pct: 0 };
+    const isTheory = quiz.questionType === 'theory';
+    if (isTheory) {
+      // Theory quizzes don't have auto-grading
+      const answered = Object.keys(theoryAnswers).filter(k => theoryAnswers[k]?.trim()).length;
+      return { correct: answered, total: quiz.questions.length, pct: Math.round((answered / quiz.questions.length) * 100), isTheory: true };
+    }
     let correct = 0;
     quiz.questions.forEach((q) => {
       if (answers[q.id] === q.correctAnswer) correct++;
     });
-    return { correct, total: quiz.questions.length, pct: Math.round((correct / quiz.questions.length) * 100) };
+    return { correct, total: quiz.questions.length, pct: Math.round((correct / quiz.questions.length) * 100), isTheory: false };
   };
 
   // ── Restart ──
@@ -110,7 +125,9 @@ export default function PdfQuiz() {
     setFile(null);
     setQuiz(null);
     setAnswers({});
+    setTheoryAnswers({});
     setShowFeedback({});
+    setShowModelAnswer({});
     setCurrentQ(0);
     setError('');
   };
@@ -211,6 +228,7 @@ export default function PdfQuiz() {
                     { key: 'mcq', label: 'MCQ' },
                     { key: 'true_false', label: 'True/False' },
                     { key: 'mixed', label: 'Mixed' },
+                    { key: 'theory', label: 'Theory' },
                   ].map((t) => (
                     <button
                       key={t.key}
@@ -276,6 +294,78 @@ export default function PdfQuiz() {
           {(() => {
             const q = quiz.questions[currentQ];
             const answered = showFeedback[q.id];
+            const isTheory = quiz.questionType === 'theory';
+
+            if (isTheory) {
+              // ── Theory Question Card ──
+              return (
+                <div className="pq-question-card pq-theory-card" key={q.id}>
+                  <div className="pq-theory-badge"><LuPenLine /> Theory Question</div>
+                  <p className="pq-question-text">{q.question}</p>
+
+                  <div className="pq-theory-answer-area">
+                    <label className="pq-theory-label">Your Answer</label>
+                    <textarea
+                      className="pq-theory-textarea"
+                      placeholder="Write your descriptive answer here..."
+                      rows={6}
+                      value={theoryAnswers[q.id] || ''}
+                      onChange={(e) => setTheoryAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                      disabled={answered}
+                    />
+                  </div>
+
+                  {!answered && (
+                    <button
+                      className="btn btn-primary pq-submit-theory-btn"
+                      onClick={() => handleTheorySubmit(q.id)}
+                      disabled={!theoryAnswers[q.id]?.trim()}
+                    >
+                      <LuEye /> Submit & View Model Answer
+                    </button>
+                  )}
+
+                  {answered && (
+                    <div className="pq-model-answer-section">
+                      <button
+                        className="pq-model-answer-toggle"
+                        onClick={() => setShowModelAnswer(prev => ({ ...prev, [q.id]: !prev[q.id] }))}
+                      >
+                        <span><LuEye /> Model Answer</span>
+                        {showModelAnswer[q.id] ? <LuChevronUp /> : <LuChevronDown />}
+                      </button>
+                      {showModelAnswer[q.id] && (
+                        <div className="pq-model-answer-content">
+                          <p className="pq-model-answer-text">{q.modelAnswer}</p>
+                          {q.keyPoints && q.keyPoints.length > 0 && (
+                            <div className="pq-key-points">
+                              <strong>Key Points to Cover:</strong>
+                              <ul>
+                                {q.keyPoints.map((kp, ki) => (
+                                  <li key={ki}>{kp}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {answered && (
+                    <button className="btn btn-primary pq-next-btn" onClick={goNext}>
+                      {currentQ < quiz.questions.length - 1 ? (
+                        <><span>Next Question</span> <LuArrowRight /></>
+                      ) : (
+                        <><span>See Summary</span> <LuArrowRight /></>
+                      )}
+                    </button>
+                  )}
+                </div>
+              );
+            }
+
+            // ── MCQ/TF Question Card ──
             const userAnswer = answers[q.id];
             return (
               <div className="pq-question-card" key={q.id}>
@@ -303,7 +393,6 @@ export default function PdfQuiz() {
                   })}
                 </div>
 
-                {/* Explanation */}
                 {answered && (
                   <div className={`pq-explanation ${userAnswer === q.correctAnswer ? 'correct' : 'incorrect'}`}>
                     <strong>{userAnswer === q.correctAnswer ? '✓ Correct!' : '✗ Incorrect'}</strong>
@@ -311,7 +400,6 @@ export default function PdfQuiz() {
                   </div>
                 )}
 
-                {/* Next button */}
                 {answered && (
                   <button className="btn btn-primary pq-next-btn" onClick={goNext}>
                     {currentQ < quiz.questions.length - 1 ? (
@@ -332,17 +420,75 @@ export default function PdfQuiz() {
         <div className="pq-result-section animate-fadeInUp">
           {(() => {
             const r = getResults();
+            const isTheory = r.isTheory;
+
+            if (isTheory) {
+              // ── Theory Results ──
+              return (
+                <>
+                  <div className="pq-result-hero">
+                    <div className="pq-grade-circle good">✓</div>
+                    <h2>Theory Quiz Complete!</h2>
+                    <p>You answered {r.correct} of {r.total} questions</p>
+                  </div>
+
+                  <div className="pq-review-list">
+                    <h3>Review Your Answers</h3>
+                    {quiz.questions.map((q, i) => {
+                      const userAns = theoryAnswers[q.id] || '';
+                      return (
+                        <div key={q.id} className="pq-review-item pq-review-theory">
+                          <div className="pq-review-q">
+                            <span className="pq-review-num">{i + 1}</span>
+                            <span>{q.question}</span>
+                          </div>
+                          {userAns && (
+                            <div className="pq-theory-your-answer">
+                              <strong>Your Answer:</strong>
+                              <p>{userAns}</p>
+                            </div>
+                          )}
+                          <div className="pq-theory-model-review">
+                            <strong>Model Answer:</strong>
+                            <p>{q.modelAnswer}</p>
+                            {q.keyPoints && q.keyPoints.length > 0 && (
+                              <div className="pq-key-points">
+                                <strong>Key Points:</strong>
+                                <ul>
+                                  {q.keyPoints.map((kp, ki) => (
+                                    <li key={ki}>{kp}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pq-result-actions">
+                    <button className="btn btn-primary btn-lg" onClick={restart}>
+                      <LuRotateCcw /> Generate New Quiz
+                    </button>
+                    <button className="btn btn-secondary btn-lg" onClick={() => navigate('/dashboard')}>
+                      <LuLayoutDashboard /> Back to Dashboard
+                    </button>
+                  </div>
+                </>
+              );
+            }
+
+            // ── MCQ Results ──
             const grade = r.pct >= 80 ? 'excellent' : r.pct >= 60 ? 'good' : r.pct >= 40 ? 'average' : 'poor';
             return (
               <>
-                {/* Score circle */}
                 <div className="pq-result-hero">
                   <div className={`pq-grade-circle ${grade}`}>{r.pct}%</div>
                   <h2>{r.pct >= 80 ? 'Excellent!' : r.pct >= 60 ? 'Good Job!' : r.pct >= 40 ? 'Not Bad' : 'Keep Trying'}</h2>
                   <p>{r.correct} of {r.total} correct</p>
                 </div>
 
-                {/* Review */}
                 <div className="pq-review-list">
                   <h3>Review Answers</h3>
                   {quiz.questions.map((q, i) => {
@@ -366,7 +512,6 @@ export default function PdfQuiz() {
                   })}
                 </div>
 
-                {/* Actions */}
                 <div className="pq-result-actions">
                   <button className="btn btn-primary btn-lg" onClick={restart}>
                     <LuRotateCcw /> Generate New Quiz
