@@ -7,6 +7,7 @@ import QuizPlay from './pages/QuizPlay';
 import QuizResult from './pages/QuizResult';
 import StudentDashboard from './pages/StudentDashboard';
 import EducatorDashboard from './pages/EducatorDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import LearningPath from './pages/LearningPath';
 import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
@@ -48,6 +49,13 @@ function App() {
       <Routes>
       {/* Public routes */}
       <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Landing />} />
+
+      {/* Admin — standalone, no sidebar layout */}
+      <Route path="/admin" element={
+        <ProtectedRoute roles={['admin']}>
+          <AdminDashboard />
+        </ProtectedRoute>
+      } />
 
       {/* Protected routes with layout */}
       <Route element={<Layout />}>
@@ -147,6 +155,7 @@ function App() {
 
 function DashboardRedirect() {
   const { user } = useAuth();
+  if (user?.role === 'admin') return <Navigate to="/admin" replace />;
   if (user?.role === 'educator') return <Navigate to="/educator-dashboard" replace />;
   return <Navigate to="/student-dashboard" replace />;
 }

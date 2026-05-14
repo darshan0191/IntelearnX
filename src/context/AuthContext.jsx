@@ -147,6 +147,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!user,
     isStudent: user?.role === 'student',
     isEducator: user?.role === 'educator',
+    isAdmin: user?.role === 'admin',
   };
 
   return (
