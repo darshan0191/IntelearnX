@@ -141,8 +141,8 @@ export function QuizProvider({ children }) {
         maxStreak: maxStreak > streak ? maxStreak : (finalAnswers[finalAnswers.length - 1]?.correct ? streak + 1 : streak),
       };
 
-      // Save to storage
-      await saveQuizResult(user.id, result);
+      // Save to storage (include questions for history review)
+      await saveQuizResult(user.id, result, currentQuiz.questions);
       await addXP(user.id, xpEarned);
 
       // Check for new badges

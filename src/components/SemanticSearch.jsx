@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { semanticSearch, isVectorDbConfigured, retrieveContext } from '../services/vectorService';
+import { semanticSearch, isVectorDbConfigured, retrieveContext, cleanTextForEmbedding } from '../services/vectorService';
 import { getQuizHistory } from '../services/storageService';
 import { geminiGenerate, isGeminiConfigured } from '../services/openaiClient';
 import { validateEngineeringDomain, OUT_OF_DOMAIN_MESSAGE } from '../utils/engineeringDomainGuard';
@@ -26,6 +26,66 @@ import './SemanticSearch.css';
  *  - maxResults {number} — max results to show (default 6)
  *  - compact {boolean} — compact mode for sidebar usage
  */
+/**
+ * Generate query variants for multi-query search.
+ * Returns the original + reformulated queries to improve recall.
+ */
+function generateQueryVariants(query) {
+  const q = query.trim();
+  const variants = [q];
+
+  // Add a question-form variant
+  if (!q.endsWith('?')) {
+    variants.push(`What is ${q}?`);
+  }
+
+  // Add a keyword-focused variant (strip common filler words)
+  const stopWords = new Set(['what', 'is', 'the', 'a', 'an', 'of', 'in', 'for', 'to', 'and', 'or',
+    'how', 'does', 'do', 'can', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had',
+    'this', 'that', 'with', 'from', 'about', 'which', 'when', 'where', 'why', 'explain',
+    'describe', 'tell', 'me', 'please']);
+  const keywords = q.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+  if (keywords.length >= 2 && keywords.join(' ') !== q.toLowerCase().trim()) {
+    variants.push(keywords.join(' '));
+  }
+
+  return variants.slice(0, 3);
+}
+
+/**
+ * Remove results with substantially overlapping text content.
+ */
+function deduplicateByText(results, threshold = 0.6) {
+  if (results.length <= 1) return results;
+  const unique = [];
+  const keptTexts = [];
+
+  for (const r of results) {
+    const text = (r.payload?.text || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    if (text.length < 20) { unique.push(r); continue; }
+
+    let isDup = false;
+    for (const kept of keptTexts) {
+      // Compute word overlap ratio
+      const wordsA = new Set(text.split(/\s+/).filter(w => w.length > 3));
+      const wordsB = new Set(kept.split(/\s+/).filter(w => w.length > 3));
+      if (wordsA.size === 0 || wordsB.size === 0) continue;
+      let intersect = 0;
+      for (const w of wordsA) { if (wordsB.has(w)) intersect++; }
+      if (intersect / Math.min(wordsA.size, wordsB.size) >= threshold) {
+        isDup = true;
+        break;
+      }
+    }
+
+    if (!isDup) {
+      unique.push(r);
+      keptTexts.push(text);
+    }
+  }
+  return unique;
+}
+
 export default function SemanticSearch({
   userId = '',
   placeholder = 'Search your study material semantically…',
@@ -72,20 +132,25 @@ export default function SemanticSearch({
         if (quiz.questions && Array.isArray(quiz.questions)) {
           for (const q of quiz.questions) {
             const qText = (q.question || '').toLowerCase();
-            const aText = (q.correctAnswer || q.explanation || '').toLowerCase();
-            const questionMatch = queryTerms.some(term =>
+            // Handle both 'correct' and 'correctAnswer' field names (Firebase schema uses 'correct')
+            const correctAns = q.correctAnswer || q.correct || '';
+            const aText = (correctAns + ' ' + (q.explanation || '')).toLowerCase();
+            
+            // Score based on how many query terms match
+            const matchedTerms = queryTerms.filter(term =>
               qText.includes(term) || aText.includes(term)
             );
+            const matchRatio = queryTerms.length > 0 ? matchedTerms.length / queryTerms.length : 0;
 
-            if (questionMatch || topicMatch) {
+            if (matchRatio > 0.3 || topicMatch) {
               matched.push({
                 id: `quiz-${quiz.id}-${q.id || Math.random()}`,
-                score: questionMatch ? 0.7 : 0.5,
+                score: matchRatio > 0.5 ? 0.75 : topicMatch ? 0.55 : 0.45,
                 source: 'quiz-history',
                 payload: {
-                  text: `Q: ${q.question}`,
+                  text: `Q: ${q.question}\nAnswer: ${correctAns}${q.explanation ? '\nExplanation: ' + q.explanation : ''}`,
                   question: q.question,
-                  correctAnswer: q.correctAnswer || q.correct_answer || '',
+                  correctAnswer: correctAns,
                   explanation: q.explanation || '',
                   topic: quiz.topic || '',
                   subject: quiz.subject || '',
@@ -111,7 +176,9 @@ export default function SemanticSearch({
           });
         }
       }
-      return matched.slice(0, maxResults);
+      return matched
+        .sort((a, b) => b.score - a.score)
+        .slice(0, maxResults);
     } catch (e) {
       console.warn('Quiz history search failed:', e);
       return [];
@@ -126,7 +193,7 @@ export default function SemanticSearch({
     try {
       // Build context from all sources
       const contextParts = contextResults
-        .filter(r => r.score >= 0.3)
+        .filter(r => r.score >= 0.40)
         .map((r, i) => {
           const sourceLabel = r.source === 'pdf' ? `[PDF: ${r.payload?.fileName || 'Document'}]`
             : r.source === 'quiz' ? '[Quiz Knowledge]'
@@ -134,7 +201,7 @@ export default function SemanticSearch({
           const text = r.payload?.text || r.payload?.question || '';
           const answer = r.payload?.correctAnswer ? `\nAnswer: ${r.payload.correctAnswer}` : '';
           const explanation = r.payload?.explanation ? `\nExplanation: ${r.payload.explanation}` : '';
-          return `Source ${i + 1} ${sourceLabel}:\n${text}${answer}${explanation}`;
+          return `Source ${i + 1} ${sourceLabel} (${Math.round(r.score * 100)}% match):\n${text}${answer}${explanation}`;
         })
         .join('\n\n---\n\n');
 
@@ -144,27 +211,29 @@ export default function SemanticSearch({
 
 A student asked: "${searchQuery}"
 
-Below is the relevant context retrieved from their uploaded PDFs and past quiz data. Answer their question using ONLY the information below. Be accurate, concise, and educational.
+Below is the relevant context retrieved from their uploaded PDFs and past quiz data.
 
 CONTEXT:
 ${contextParts}
 
 RULES:
-1. Answer based ONLY on the context above. Do not make up information.
-2. If the context directly answers the question, provide a clear, detailed answer.
-3. If the context partially covers the topic, answer what you can and note what isn't covered.
-4. Reference which source (PDF or Quiz) the information came from.
-5. Format your answer with clear headings and bullet points where helpful.
-6. Keep the answer focused and concise (2-4 paragraphs max).
-7. If nothing in the context relates to the question, say "No relevant information found in your study materials for this query."
+1. Answer based ONLY on the context above. Do NOT invent information not present.
+2. **Quote exact sentences or paragraphs** from the context when answering. Use quotation marks for direct quotes.
+3. If the source text has minor spelling or formatting errors from PDF extraction, fix them when quoting (e.g. "algo rithm" → "algorithm").
+4. Always cite which source (e.g. "Source 1 [PDF: filename]") the information comes from.
+5. If the context directly answers the question, provide the exact relevant paragraph(s) first, then a brief explanation.
+6. If the context partially covers the topic, provide what is available and clearly state what is not covered.
+7. Format your answer with clear structure: direct quotes first, then explanation.
+8. Keep the answer focused and educational (2-4 paragraphs max).
+9. If nothing in the context relates to the question, say "No relevant information found in your study materials for this query."
 
 Answer:`;
 
       const response = await geminiGenerate(prompt, {
-        systemPrompt: 'You are a helpful study assistant. Give clear, accurate answers based only on the provided context.',
-        temperature: 0.3,
-        maxOutputTokens: 1024,
-        useCache: true,
+        systemPrompt: 'You are a precise study assistant. Always quote exact text from the provided context. Never fabricate information.',
+        temperature: 0.2,
+        maxOutputTokens: 1200,
+        useCache: false, // Each search query should get a fresh answer
       });
 
       setAiAnswer(response || '');
@@ -199,28 +268,69 @@ Answer:`;
     setAiAnswer('');
 
     try {
-      // Search all sources in parallel
+      // Search all sources in parallel — request more results for better coverage
+      const vectorLimit = Math.max(maxResults, 10);
+
+      // Multi-query: search with expanded query variants for better recall
+      const queryVariants = generateQueryVariants(q);
+
       const searchPromises = [
         searchQuizHistory(q),
       ];
 
       if (configured) {
-        searchPromises.push(
-          semanticSearch('pdf_chunks', q, maxResults).catch(() => []),
-          semanticSearch('quiz_knowledge', q, maxResults).catch(() => []),
-        );
+        // Search each query variant against both collections
+        for (const variant of queryVariants) {
+          searchPromises.push(
+            semanticSearch('pdf_chunks', variant, vectorLimit).catch(() => []),
+            semanticSearch('quiz_knowledge', variant, vectorLimit).catch(() => []),
+          );
+        }
       }
 
-      const [quizHistResults, pdfResults = [], quizVectorResults = []] = await Promise.all(searchPromises);
+      const allResults = await Promise.all(searchPromises);
+      const quizHistResults = allResults[0];
 
-      // Merge, tag source, sort by score
-      const merged = [
+      // Merge all vector results (from all query variants)
+      const pdfResults = [];
+      const quizVectorResults = [];
+      if (configured) {
+        for (let i = 1; i < allResults.length; i += 2) {
+          pdfResults.push(...(allResults[i] || []));
+          quizVectorResults.push(...(allResults[i + 1] || []));
+        }
+      }
+
+      // Deduplicate by ID (keep highest score for each point)
+      const deduped = new Map();
+      for (const r of [
         ...pdfResults.map((r) => ({ ...r, source: 'pdf' })),
         ...quizVectorResults.map((r) => ({ ...r, source: 'quiz' })),
-        ...quizHistResults.map((r) => r), // already tagged
-      ]
-        .sort((a, b) => b.score - a.score)
-        .slice(0, maxResults);
+        ...quizHistResults.map((r) => r),
+      ]) {
+        const existing = deduped.get(r.id);
+        if (!existing || r.score > existing.score) {
+          deduped.set(r.id, r);
+        }
+      }
+
+      // Filter, sort, and deduplicate overlapping text
+      let merged = Array.from(deduped.values())
+        .filter((r) => r.score >= 0.40)
+        .sort((a, b) => b.score - a.score);
+
+      // Remove results with substantially overlapping text
+      merged = deduplicateByText(merged);
+      merged = merged.slice(0, maxResults);
+
+      // Clean result text for display
+      merged = merged.map(r => ({
+        ...r,
+        payload: {
+          ...r.payload,
+          text: cleanTextForEmbedding(r.payload?.text || r.payload?.question || ''),
+        },
+      }));
 
       setResults(merged);
       setLoading(false);
@@ -403,7 +513,7 @@ Answer:`;
                       </div>
 
                       <p className="ss-result-text">
-                        {expanded ? text : preview}{!expanded && hasMore ? '…' : ''}
+                        {expanded ? text : (text.length > 250 ? text.slice(0, 250) + '…' : text)}
                       </p>
 
                       {/* Extra details for quiz results */}

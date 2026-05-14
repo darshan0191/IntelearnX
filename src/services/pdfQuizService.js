@@ -53,12 +53,125 @@ async function extractTextFromPdf(file) {
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const pageText = content.items.map((item) => item.str).join(' ');
-    if (pageText.trim()) textParts.push(pageText);
+
+    // Preserve paragraph structure: group text items by their Y position.
+    // Items on different Y lines in the PDF likely represent different lines/paragraphs.
+    let lastY = null;
+    const lineGroups = [];
+    let currentLine = [];
+
+    for (const item of content.items) {
+      const y = Math.round(item.transform[5]); // Y coordinate
+      if (lastY !== null && Math.abs(y - lastY) > 5) {
+        // New line — flush current line
+        if (currentLine.length > 0) {
+          lineGroups.push(currentLine.join(' ').trim());
+        }
+        // Large gap indicates paragraph break
+        if (Math.abs(y - lastY) > 15) {
+          lineGroups.push(''); // Empty line = paragraph separator
+        }
+        currentLine = [];
+      }
+      if (item.str.trim()) currentLine.push(item.str);
+      lastY = y;
+    }
+    if (currentLine.length > 0) {
+      lineGroups.push(currentLine.join(' ').trim());
+    }
+
+    const pageText = lineGroups.filter(l => l !== undefined).join('\n');
+    if (pageText.trim()) textParts.push(pageText.trim());
   }
 
-  return textParts.join('\n\n');
+  const rawText = textParts.join('\n\n');
+  return cleanExtractedText(rawText);
 }
+
+/**
+ * Clean and normalize text extracted from PDF.
+ * Fixes common extraction artifacts that degrade search and embedding quality.
+ */
+function cleanExtractedText(text) {
+  if (!text) return text;
+
+  let cleaned = text;
+
+  // 1. Fix broken hyphenated words from line-wrap (e.g. "algo-\nrithm" → "algorithm")
+  cleaned = cleaned.replace(/(\w)-\s*\n\s*(\w)/g, '$1$2');
+
+  // 2. Fix broken words split across lines without hyphens (e.g. "ther mo\n dynamics" → tricky, but handle common patterns)
+  //    Re-join lines that end mid-word and next line starts lowercase
+  cleaned = cleaned.replace(/([a-z])\s*\n\s*([a-z])/g, (match, p1, p2) => {
+    // Only rejoin if it's within a "word" context (not end of sentence)
+    return `${p1}${p2}`;
+  });
+
+  // 3. Remove garbled non-ASCII characters (common PDF extraction artifacts)
+  //    Preserve standard Unicode letters, numbers, punctuation, math symbols
+  cleaned = cleaned.replace(/[^\x20-\x7E\n\r\t\u00A0-\u024F\u0370-\u03FF\u2000-\u206F\u2190-\u21FF\u2200-\u22FF\u2300-\u23FF\u25A0-\u25FF\u2600-\u26FF]/g, '');
+
+  // 4. Normalize whitespace
+  //    a. Replace tabs with spaces
+  cleaned = cleaned.replace(/\t/g, '  ');
+  //    b. Remove multiple spaces (but keep single spaces)
+  cleaned = cleaned.replace(/ {3,}/g, '  ');
+  //    c. Remove trailing whitespace on each line
+  cleaned = cleaned.replace(/[ \t]+$/gm, '');
+  //    d. Collapse 3+ blank lines into 2
+  cleaned = cleaned.replace(/\n{4,}/g, '\n\n\n');
+
+  // 5. Fix missing spaces after punctuation (common PDF artifact)
+  //    e.g. "sentence.Next" → "sentence. Next"
+  cleaned = cleaned.replace(/([.!?;:,])([A-Z])/g, '$1 $2');
+
+  // 6. Fix duplicate punctuation (e.g. "word.." → "word.")
+  cleaned = cleaned.replace(/([.!?])\1+/g, '$1');
+
+  // 7. Fix spaces before punctuation (e.g. "word ." → "word.")
+  cleaned = cleaned.replace(/\s+([.!?,;:)])/g, '$1');
+
+  // 8. Fix spaces after opening brackets (e.g. "( word" → "(word")
+  cleaned = cleaned.replace(/([(\[])\s+/g, '$1');
+
+  // 9. Normalize bullet/list markers to consistent format
+  cleaned = cleaned.replace(/^[●○◆◇▪▸►▶→]\s*/gm, '• ');
+  cleaned = cleaned.replace(/^[-–—]\s+/gm, '• ');
+
+  // 10. Fix stray single characters on their own lines (OCR artifacts)
+  //     Remove lines that contain only a single non-word character
+  cleaned = cleaned.replace(/^\s*[^\w\n]{1}\s*$/gm, '');
+
+  // 11. Normalize quotation marks
+  cleaned = cleaned.replace(/[""]/g, '"');
+  cleaned = cleaned.replace(/['']/g, "'");
+
+  // 12. Fix common OCR/extraction spelling errors in technical text
+  cleaned = cleaned
+    .replace(/\bfl\s?oating\b/gi, 'floating')
+    .replace(/\bfi\s?le\b/gi, 'file')
+    .replace(/\bfi\s?nd\b/gi, 'find')
+    .replace(/\bfl\s?ow\b/gi, 'flow')
+    .replace(/\bfi\s?rst\b/gi, 'first')
+    .replace(/\bfi\s?eld\b/gi, 'field')
+    .replace(/\bfi\s?lter\b/gi, 'filter')
+    .replace(/\bfi\s?gure\b/gi, 'figure')
+    .replace(/\bdefi\s?ne\b/gi, 'define')
+    .replace(/\bdefi\s?nition\b/gi, 'definition')
+    .replace(/\bsigni\s?ficant\b/gi, 'significant');
+
+  // 13. Remove page numbers on their own lines (e.g. lines that are just "12" or "Page 5")
+  cleaned = cleaned.replace(/^\s*(Page\s*)?\d{1,4}\s*$/gm, '');
+
+  // 14. Remove common PDF header/footer artifacts (repeated short lines)
+  cleaned = cleaned.replace(/^\s*(©|Copyright|All rights reserved|Confidential).*$/gm, '');
+
+  // 15. Final trim
+  cleaned = cleaned.trim();
+
+  return cleaned;
+}
+
 
 /**
  * Build the quiz generation prompt

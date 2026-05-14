@@ -14,6 +14,7 @@ import {
   LuGamepad2,
   LuClipboardList,
   LuPenLine,
+  LuHistory,
 } from 'react-icons/lu';
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -97,6 +98,17 @@ export default function Sidebar({ isOpen, onClose }) {
           >
             <LuClipboardList />
             <span>Teacher Quizzes</span>
+          </NavLink>
+        )}
+
+        {isStudent && (
+          <NavLink
+            to="/quiz-history"
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={onClose}
+          >
+            <LuHistory />
+            <span>Quiz History</span>
           </NavLink>
         )}
 
