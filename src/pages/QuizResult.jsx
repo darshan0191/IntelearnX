@@ -240,9 +240,10 @@ export default function QuizResult() {
         <button className="btn btn-primary btn-lg" onClick={() => { resetQuiz(); navigate('/quiz/select'); }}>
           <LuRotateCcw /> Take Another Quiz
         </button>
-        <Link to="/student-dashboard" className="btn btn-secondary btn-lg" onClick={resetQuiz}>
+        <Link to="/student-dashboard" className="btn btn-secondary btn-lg">
           <LuBookOpen /> View Dashboard
         </Link>
+
       </div>
     </div>
   );
