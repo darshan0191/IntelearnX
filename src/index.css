@@ -3,7 +3,7 @@
    Dark Obsidian + Gold — Premium, geometric
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,300;1,400;1,700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
   /* ── Dark obsidian palette ── */
@@ -53,8 +53,8 @@
   --border-focus: rgba(201, 168, 76, 0.45);
 
   /* ── Typography ── */
-  --font-sans:   'DM Sans', system-ui, -apple-system, sans-serif;
-  --font-serif:  'DM Serif Display', Georgia, serif;
+  --font-sans:   'Lato', system-ui, -apple-system, sans-serif;
+  --font-serif:  'Lato', Georgia, serif;
   --font-mono:   'JetBrains Mono', monospace;
 
   /* ── Spacing ── */
@@ -274,8 +274,7 @@ ul, ol { list-style: none; }
   position: relative; z-index: 1;
 }
 .stat-card .stat-value {
-  font-family: var(--font-serif);
-  font-size: 2rem; font-weight: 400; line-height: 1; margin-bottom: var(--s1);
+  font-family: var(--font-serif); font-size: ; font-weight: 700; line-height: 1; margin-bottom: var(--s1);
   color: var(--text); position: relative; z-index: 1;
 }
 .stat-card .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 400; position: relative; z-index: 1; }

@@ -32,8 +32,7 @@ body:has(.landing) {
   font-size: 1.2rem;
 }
 .logo-text-landing {
-  font-family: var(--font-serif);
-  font-size: 1.35rem; font-weight: 400; color: var(--sand-100);
+  font-family: var(--font-serif); font-size: ; font-weight: 700; color: var(--sand-100);
 }
 .landing-nav-actions { display: flex; gap: var(--s3); }
 .landing-nav-actions .btn-secondary {
@@ -62,9 +61,7 @@ body:has(.landing) {
 .hero-badge svg { font-size: 0.95rem; color: var(--accent-light); }
 
 .hero-title {
-  font-family: var(--font-serif);
-  font-size: clamp(2.4rem, 5.5vw, 4rem);
-  font-weight: 400; line-height: 1.12; color: var(--sand-100);
+  font-family: var(--font-serif); font-size: ; font-weight: 700; line-height: 1.12; color: var(--sand-100);
   margin-bottom: var(--s6); letter-spacing: -0.02em;
 }
 .hero-gradient-text, .gradient-text {
@@ -95,7 +92,7 @@ body:has(.landing) {
 }
 .hero-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .hero-stat-value {
-  font-family: var(--font-serif); font-size: 1.6rem; font-weight: 400;
+  font-family: var(--font-serif); font-size: ; font-weight: 700;
   color: var(--sand-100);
 }
 .hero-stat-label { font-size: 0.72rem; color: var(--sand-500); font-weight: 400; letter-spacing: 0.03em; }
@@ -112,9 +109,7 @@ body:has(.landing) {
   margin-bottom: var(--s4);
 }
 .section-title {
-  font-family: var(--font-serif);
-  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
-  font-weight: 400; margin-bottom: var(--s4);
+  font-family: var(--font-serif); font-size: ; font-weight: 700; margin-bottom: var(--s4);
   color: var(--text); letter-spacing: -0.02em;
 }
 .section-subtitle { font-size: 0.95rem; color: var(--text-secondary); max-width: 520px; margin: 0 auto; line-height: 1.6; }
@@ -175,7 +170,7 @@ body:has(.landing) {
   pointer-events: none;
 }
 .cta-content { position: relative; z-index: 1; }
-.cta-content h2 { font-family: var(--font-serif); font-size: clamp(1.3rem, 2.5vw, 1.9rem); font-weight: 400; margin-bottom: var(--s4); }
+.cta-content h2 { font-family: var(--font-serif); font-size: ; font-weight: 700; margin-bottom: var(--s4); }
 .cta-content p { font-size: 0.95rem; color: var(--text-secondary); margin-bottom: var(--s8); }
 
 /* Step cards */
@@ -188,7 +183,7 @@ body:has(.landing) {
 }
 .step-card:hover { transform: translateY(-4px); box-shadow: var(--card-shadow-hover); }
 .step-number {
-  font-family: var(--font-serif); font-size: 3rem; font-weight: 400;
+  font-family: var(--font-serif); font-size: ; font-weight: 700;
   color: var(--accent); opacity: 0.18; margin-bottom: var(--s4);
   line-height: 1;
 }

@@ -19,7 +19,7 @@
   font-size: 1.4rem; color: #5B8FB9; flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(91,143,185,0.1);
 }
-.pfb-page-header h1 { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 400; margin-bottom: 3px; }
+.pfb-page-header h1 { font-family: var(--font-serif); font-size: ; font-weight: 700; margin-bottom: 3px; }
 .pfb-page-header p { font-size: 0.83rem; color: var(--text-muted); }
 .pfb-save-btn { margin-left: auto; }
 
@@ -145,7 +145,7 @@
 }
 .pfp-name {
   position: relative; z-index: 1;
-  font-family: var(--font-serif); font-size: 2rem; font-weight: 400;
+  font-family: var(--font-serif); font-size: ; font-weight: 700;
   color: var(--text); margin-bottom: var(--s2);
 }
 .pfp-tagline {

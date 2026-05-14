@@ -247,9 +247,7 @@
 }
 
 .admin-stat-value {
-  font-family: var(--font-serif);
-  font-size: 1.8rem;
-  font-weight: 400;
+  font-family: var(--font-serif); font-size: ; font-weight: 700;
   color: var(--text);
   line-height: 1;
   margin-bottom: 4px;

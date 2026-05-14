@@ -146,7 +146,7 @@
   background: var(--card);
 }
 .dg-screen-icon { font-size: 3rem; }
-.dg-screen h2 { font-family: var(--font-serif); font-size: 1.8rem; font-weight: 400; color: var(--text); margin: 0; }
+.dg-screen h2 { font-family: var(--font-serif); font-size: ; font-weight: 700; color: var(--text); margin: 0; }
 .dg-screen p  { font-size: 0.9rem; color: var(--text-secondary); margin: 0; max-width: 340px; }
 .dg-final-score { font-size: 1rem !important; color: var(--accent) !important; }
 .dg-rules {

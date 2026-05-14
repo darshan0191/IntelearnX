@@ -155,7 +155,7 @@
   background: var(--card);
 }
 .sq-screen-icon { font-size: 3rem; }
-.sq-screen h2 { font-family: var(--font-serif); font-size: 1.8rem; font-weight: 400; color: var(--text); margin: 0; }
+.sq-screen h2 { font-family: var(--font-serif); font-size: ; font-weight: 700; color: var(--text); margin: 0; }
 .sq-screen p  { font-size: 0.9rem; color: var(--text-secondary); margin: 0; max-width: 340px; }
 .sq-final { font-size: 1rem !important; color: var(--success) !important; }
 .sq-rules {
