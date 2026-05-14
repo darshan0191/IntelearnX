@@ -12,7 +12,7 @@
   font-size: 1.4rem; color: var(--accent); flex-shrink: 0;
 }
 .tb-header h1 {
-  font-family: var(--font-serif); font-size: 1.45rem; font-weight: 400; margin-bottom: 2px;
+  font-family: var(--font-serif); font-size: ; font-weight: 700; margin-bottom: 2px;
 }
 .tb-header p { color: var(--text-muted); font-size: 0.85rem; }
 
@@ -109,7 +109,7 @@
   text-align: center; max-width: 460px; width: 100%;
 }
 .tb-generating-card h3 {
-  font-family: var(--font-serif); font-size: 1.1rem; font-weight: 400;
+  font-family: var(--font-serif); font-size: ; font-weight: 700;
   margin: var(--s5) 0 var(--s2); color: var(--text);
 }
 .tb-generating-card p { font-size: 0.8rem; color: var(--text-muted); margin-bottom: var(--s6); }
@@ -145,7 +145,7 @@
 }
 .tb-results-info { display: flex; flex-direction: column; gap: 4px; }
 .tb-results-info h2 {
-  font-family: var(--font-serif); font-size: 1.3rem; font-weight: 400;
+  font-family: var(--font-serif); font-size: ; font-weight: 700;
 }
 .tb-results-info p { font-size: 0.82rem; color: var(--text-muted); }
 

@@ -13,7 +13,7 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 1.4rem; color: var(--accent); flex-shrink: 0;
 }
-.mq-header-info h1 { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 400; margin-bottom: 3px; }
+.mq-header-info h1 { font-family: var(--font-serif); font-size: ; font-weight: 700; margin-bottom: 3px; }
 .mq-header-info p { font-size: 0.83rem; color: var(--text-muted); }
 
 /* Empty */

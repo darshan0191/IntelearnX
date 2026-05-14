@@ -71,8 +71,7 @@
   box-shadow: 0 3px 10px rgba(201,168,76,0.35);
 }
 .sidebar-logo-text {
-  font-family: var(--font-serif);
-  font-size: 1.15rem; font-weight: 400;
+  font-family: var(--font-serif); font-size: ; font-weight: 700;
   color: var(--text);
   letter-spacing: -0.01em;
 }

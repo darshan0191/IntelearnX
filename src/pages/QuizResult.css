@@ -51,12 +51,12 @@
   animation: qr-grade-pop 0.6s var(--ease-spring) 0.1s both;
 }
 .qr-grade-letter {
-  font-family: var(--font-serif); font-size: 2.2rem; font-weight: 400;
+  font-family: var(--font-serif); font-size: ; font-weight: 700;
   color: var(--gc, #fbbf24);
 }
 .qr-hero-info { position: relative; z-index: 1; }
 .qr-hero-title {
-  font-family: var(--font-serif); font-size: 1.6rem; font-weight: 400;
+  font-family: var(--font-serif); font-size: ; font-weight: 700;
   color: var(--text); margin-bottom: var(--s1);
 }
 .qr-hero-sub { font-size: 0.85rem; color: var(--text-muted); }
@@ -84,7 +84,7 @@
 .qr-stat-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hover); }
 .qr-stat-icon { font-size: 1.1rem; color: var(--sc, var(--accent)); }
 .qr-stat-value {
-  font-family: var(--font-serif); font-size: 1.1rem; font-weight: 400;
+  font-family: var(--font-serif); font-size: ; font-weight: 700;
   color: var(--text); line-height: 1;
 }
 .qr-stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
@@ -275,7 +275,7 @@
 }
 .bp-emoji-row { font-size: 2.5rem; }
 .bp-title {
-  font-family: var(--font-serif); font-size: 1.4rem; font-weight: 400; color: var(--text);
+  font-family: var(--font-serif); font-size: ; font-weight: 700; color: var(--text);
 }
 .bp-list { display: flex; flex-direction: column; gap: var(--s3); }
 .bp-item {
