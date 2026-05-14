@@ -15,6 +15,7 @@ import {
   LuClipboardList,
   LuPenLine,
   LuHistory,
+  LuFileStack,
 } from 'react-icons/lu';
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -177,6 +178,24 @@ export default function Sidebar({ isOpen, onClose }) {
               <LuPenLine />
               <span>My Quizzes</span>
               <span className="sidebar-badge">New</span>
+            </NavLink>
+            <NavLink
+              to="/theory-bank"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={onClose}
+            >
+              <LuBookOpen />
+              <span>Theory Bank</span>
+              <span className="sidebar-badge">AI</span>
+            </NavLink>
+            <NavLink
+              to="/question-paper"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={onClose}
+            >
+              <LuFileStack />
+              <span>Question Papers</span>
+              <span className="sidebar-badge">AI</span>
             </NavLink>
           </>
         )}

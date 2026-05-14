@@ -354,6 +354,83 @@
   .welcome-section, .dashboard-welcome { flex-direction: column; align-items: flex-start; gap: var(--s4); }
 }
 
+/* ═══ Quick Actions — Premium Feature Cards ═══ */
+.educator-actions {
+  margin-bottom: var(--s8);
+}
+.educator-actions .section-title {
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  margin-bottom: var(--s4);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+.educator-actions .section-title svg {
+  color: var(--accent);
+  font-size: 1rem;
+}
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--s4);
+}
+.tb-action-card {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s5);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--r-xl);
+  text-decoration: none;
+  color: inherit;
+  transition: all var(--dur-base) var(--ease-out);
+  box-shadow: var(--card-shadow);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+.tb-action-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(201,168,76,0.05) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+.tb-action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--card-shadow-hover);
+  border-color: rgba(201,168,76,0.4);
+}
+.tb-action-card:hover::before { opacity: 1; }
+
+.tb-action-card .action-icon {
+  width: 52px; height: 52px;
+  border-radius: var(--r-xl);
+  background: var(--accent-muted);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent); font-size: 1.3rem;
+  transition: all var(--dur-base) var(--ease-out);
+  position: relative; z-index: 1;
+}
+.tb-action-card:hover .action-icon {
+  background: var(--accent);
+  color: #fff;
+  transform: rotate(-8deg) scale(1.1);
+  box-shadow: 0 4px 12px rgba(201,168,76,0.3);
+}
+.tb-action-card .action-info { position: relative; z-index: 1; }
+.tb-action-card .action-name {
+  font-weight: 650; font-size: 0.98rem; margin-bottom: 2px; color: var(--text);
+}
+.tb-action-card .action-desc {
+  font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;
+}
+
 /* ═══ Student dashboard — dynamic layout + radar ═══ */
 .sd-dashboard--loading {
   flex-direction: column;

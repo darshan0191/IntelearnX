@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getClassStudents, getStudentPerformance, getAllUsers } from '../services/storageService';
-import { LuUsers, LuTarget, LuTrendingUp, LuTriangleAlert, LuZap, LuLoader } from 'react-icons/lu';
+import { LuUsers, LuTarget, LuTrendingUp, LuTriangleAlert, LuZap, LuLoader, LuBookOpen, LuSparkles, LuFileStack } from 'react-icons/lu';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './Dashboard.css';
 
@@ -114,6 +115,33 @@ export default function EducatorDashboard() {
         <div>
           <h1>Educator Dashboard 🧑‍🏫</h1>
           <p>Class Code: <strong>{user?.classCode || 'All Students'}</strong></p>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="educator-actions animate-fadeInUp">
+        <h3 className="section-title">
+          <LuSparkles /> Quick Actions
+        </h3>
+        <div className="action-grid">
+          <Link to="/theory-bank" className="action-card tb-action-card">
+            <div className="action-icon">
+              <LuBookOpen />
+            </div>
+            <div className="action-info">
+              <div className="action-name">Theory Bank Generator</div>
+              <div className="action-desc">Generate 100 questions from PDFs</div>
+            </div>
+          </Link>
+          <Link to="/question-paper" className="action-card tb-action-card">
+            <div className="action-icon">
+              <LuFileStack />
+            </div>
+            <div className="action-info">
+              <div className="action-name">Question Paper Set</div>
+              <div className="action-desc">Generate 3 sets of exam papers</div>
+            </div>
+          </Link>
         </div>
       </div>
 
