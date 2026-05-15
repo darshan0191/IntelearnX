@@ -21,6 +21,7 @@ import TeacherQuizPlay from './pages/TeacherQuizPlay';
 import QuizHistory from './pages/QuizHistory';
 import TheoryBankGenerator from './pages/TheoryBankGenerator';
 import QuestionPaperGenerator from './pages/QuestionPaperGenerator';
+import StudentDetail from './pages/StudentDetail';
 import SubjectSelectModal from './components/SubjectSelectModal';
 
 function ProtectedRoute({ children, roles }) {
@@ -144,6 +145,11 @@ function App() {
         <Route path="/question-paper" element={
           <ProtectedRoute roles={['educator']}>
             <QuestionPaperGenerator />
+          </ProtectedRoute>
+        } />
+        <Route path="/educator/student/:studentId" element={
+          <ProtectedRoute roles={['educator']}>
+            <StudentDetail />
           </ProtectedRoute>
         } />
         <Route path="/teacher-quizzes" element={
