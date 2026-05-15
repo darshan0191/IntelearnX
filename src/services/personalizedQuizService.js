@@ -15,10 +15,11 @@ import { validateEngineeringDomain, OUT_OF_DOMAIN_SHORT } from '../utils/enginee
 const LIBRARY_SUBJECT_NAMES = Object.keys(quizData);
 
 export const STUDY_DOMAIN_OPTIONS = [
-  { id: 'engineering', label: 'Engineering', emoji: '⚙️', hint: 'Core engineering, mechanics, design, tech' },
+  { id: 'engineering', label: 'Engineering Basics', emoji: '⚙️', hint: 'Core engineering, physics, mathematics, design' },
   { id: 'cs', label: 'Computer Science', emoji: '💻', hint: 'Programming, DSA, algorithms, OS, DBMS' },
   { id: 'electronics', label: 'Electronics & ECE', emoji: '🔌', hint: 'Circuits, VLSI, embedded, signals' },
   { id: 'software', label: 'Software Engineering', emoji: '🛠️', hint: 'SDLC, testing, DevOps, architecture' },
+  { id: 'mechanical', label: 'Mechanical Engineering', emoji: '🔧', hint: 'Thermodynamics, fluid mechanics, kinematics' },
 ];
 
 export function domainIdToLabel(id) {
@@ -109,12 +110,14 @@ STUDENT CONTEXT:
 - Student interests / keywords (use to shape scenarios and wording): ${kw}
 
 RULES:
-1. Generate exactly 10 questions.
-2. Each question belongs to exactly ONE of these domains: ${domainLabels.join(', ')}. Use the "domain" field with the exact label string.
-3. Questions should be logical / conceptual — avoid rote trivia; prefer reasoning suitable for competitive exams and university prep.
-4. Four options each; "correct" is the zero-based index 0–3 of the correct option.
-5. Return ONLY valid JSON (no markdown), shape:
-{"questions":[{"domain":"${domainLabels[0]}","question":"...","options":["","","",""],"correct":0,"explanation":"..."}]}
+1. Generate exactly 10 high-quality, challenging questions.
+2. The questions MUST directly relate to the chosen domains: ${domainLabels.join(', ')}. Do NOT drift into generic topics.
+3. Questions should test deep conceptual understanding, practical problem-solving, and advanced reasoning suitable for competitive engineering exams and university prep. Avoid rote trivia.
+4. Each question belongs to exactly ONE of these domains. Use the "domain" field with the exact label string.
+5. Provide four options each; "correct" is the zero-based index 0-3 of the correct option.
+6. The "explanation" should clearly explain WHY the correct option is right and WHY the misconception might lead to other answers.
+7. Return ONLY valid JSON (no markdown), shape:
+{"questions":[{"domain":"${domainLabels[0]}","question":"...","options":["","","",""],"correct":0,"explanation":"...","difficulty":"medium"}]}
 
 Generate all 10 questions now.`;
 
@@ -161,113 +164,111 @@ function buildFallbackQuiz(domainLabels, keywords) {
 
 const FALLBACK_GENERIC = [
   {
-    domain: 'Engineering',
-    question: 'When comparing two design choices, what should you weigh first when safety is involved?',
-    options: ['Only cost', 'Risk and failure modes', 'Only speed of delivery', 'Only aesthetics'],
-    correct: 1,
-    explanation: 'Engineering judgment prioritizes safety and understanding failure modes before optimizing cost or speed.',
+    domain: 'Engineering Basics',
+    question: 'When analyzing the stability of a feedback system, which criterion is often used without solving the characteristic equation?',
+    options: ['Nyquist Criterion', 'Bode Plot', 'Routh-Hurwitz Criterion', 'Root Locus'],
+    correct: 2,
+    explanation: 'The Routh-Hurwitz criterion determines the number of closed-loop system poles in the right half-plane without solving the characteristic equation.',
   },
   {
     domain: 'Computer Science',
-    question: 'What is the primary benefit of using version control systems like Git?',
-    options: ['Faster code execution', 'Tracking changes and collaboration', 'Automatic bug fixing', 'Code compilation'],
+    question: 'In the context of database transactions, what does the "I" in ACID properties ensure?',
+    options: ['Information is saved permanently', 'Transactions are executed sequentially without interference', 'Integrity constraints are maintained', 'Initial state is recovered on failure'],
     correct: 1,
-    explanation: 'Version control systems track code changes over time and enable collaborative development workflows.',
+    explanation: 'Isolation (I) ensures that concurrent execution of transactions leaves the database in the same state that would have been obtained if the transactions were executed sequentially.',
   },
   {
     domain: 'Electronics & ECE',
-    question: 'What is the function of a capacitor in a circuit?',
-    options: ['Amplify signals', 'Store electrical energy temporarily', 'Convert AC to DC', 'Increase resistance'],
+    question: 'In a bipolar junction transistor (BJT) operating in the active region, what is the primary relationship between collector and base current?',
+    options: ['They are inversely proportional', 'Collector current is beta times the base current', 'They are equal', 'Collector current is independent of base current'],
     correct: 1,
-    explanation: 'A capacitor stores electrical energy in an electric field between its plates and releases it when needed.',
+    explanation: 'In the active region, a BJT acts as a current amplifier where the collector current is approximately beta (the common-emitter current gain) times the base current.',
   },
+  {
+    domain: 'Software Engineering',
+    question: 'In the context of the SOLID principles, what does the Dependency Inversion Principle dictate?',
+    options: ['High-level modules should depend on low-level modules', 'Classes should depend on concrete implementations', 'High-level modules should not depend on low-level modules; both should depend on abstractions', 'Dependencies should be injected via constructors only'],
+    correct: 2,
+    explanation: 'Dependency Inversion states that high-level modules should depend on abstractions (interfaces), not on concrete low-level implementations, promoting decoupling.',
+  },
+  {
+    domain: 'Mechanical Engineering',
+    question: 'Which law of thermodynamics states that the entropy of an isolated system never decreases over time?',
+    options: ['Zeroth Law', 'First Law', 'Second Law', 'Third Law'],
+    correct: 2,
+    explanation: 'The Second Law of Thermodynamics dictates that total entropy of an isolated system can only increase or remain constant over time, giving direction to thermodynamic processes.',
+  }
 ];
 
 const FALLBACK_QUESTIONS = [
+  // Computer Science
   {
-    domain: 'Engineering',
-    question: 'A system behaves unpredictably under load. What is the most systematic first step?',
-    options: ['Rewrite everything', 'Measure and reproduce the issue', 'Add more servers blindly', 'Skip testing'],
-    correct: 1,
-    explanation: 'Reproduce and measure before changing design — core debugging practice.',
-  },
-  {
-    domain: 'Engineering',
-    question: 'Why are prototypes often built before full-scale production?',
-    options: ['To avoid planning', 'To validate assumptions with lower risk', 'To skip documentation', 'To eliminate testing'],
-    correct: 1,
-    explanation: 'Prototypes reduce risk by testing assumptions early.',
-  },
-  {
-    domain: 'Engineering',
-    question: 'What does "scalability" usually refer to?',
-    options: ['Only UI size', 'Ability to handle growth in usage or data', 'Color contrast', 'Font choice'],
-    correct: 1,
-    explanation: 'Scalability is how well a solution grows with demand.',
-  },
-  {
-    domain: 'Software Engineering',
-    question: 'Which habit best prevents technical debt from snowballing?',
-    options: ['Never refactor', 'Small continuous improvements and reviews', 'Only fix after failure', 'Copy-paste only'],
-    correct: 1,
-    explanation: 'Continuous refactoring and review keep systems maintainable.',
+    domain: 'Computer Science',
+    question: 'What is the worst-case time complexity of the Quicksort algorithm?',
+    options: ['O(n log n)', 'O(n)', 'O(n²)', 'O(1)'],
+    correct: 2,
+    explanation: 'The worst-case scenario occurs when the pivot chosen is consistently the smallest or largest element, leading to O(n²) time complexity.',
   },
   {
     domain: 'Computer Science',
-    question: 'What is the time complexity of binary search on a sorted array?',
-    options: ['O(n)', 'O(log n)', 'O(n²)', 'O(1)'],
+    question: 'Which data structure is primarily used to implement a Least Recently Used (LRU) cache efficiently?',
+    options: ['A simple Array', 'A Hash Map paired with a Doubly Linked List', 'A Binary Search Tree', 'A Stack'],
     correct: 1,
-    explanation: 'Binary search halves the search space each step, giving O(log n) time complexity.',
+    explanation: 'A Hash Map provides O(1) access to items, while the Doubly Linked List allows O(1) removal and insertion at the ends to track the most and least recently used items.',
   },
+  // Electronics & ECE
   {
-    domain: 'Computer Science',
-    question: 'Which data structure uses LIFO (Last In, First Out) ordering?',
-    options: ['Queue', 'Stack', 'Linked List', 'Hash Table'],
-    correct: 1,
-    explanation: 'A stack follows LIFO — the last element pushed is the first one popped.',
-  },
-  {
-    domain: 'Computer Science',
-    question: 'What does SQL stand for?',
-    options: ['Simple Query Logic', 'Structured Query Language', 'System Quality Level', 'Sequential Query Layout'],
-    correct: 1,
-    explanation: 'SQL stands for Structured Query Language, used for managing relational databases.',
+    domain: 'Electronics & ECE',
+    question: 'Which logic gate produces a HIGH output only when all its inputs are HIGH?',
+    options: ['OR gate', 'NAND gate', 'AND gate', 'XOR gate'],
+    correct: 2,
+    explanation: 'The AND gate performs logical multiplication, outputting 1 (HIGH) strictly when all its inputs are 1.',
   },
   {
     domain: 'Electronics & ECE',
-    question: 'What is Ohm\'s Law?',
-    options: ['P = IV', 'V = IR', 'E = mc²', 'F = ma'],
-    correct: 1,
-    explanation: 'Ohm\'s Law states that voltage (V) equals current (I) times resistance (R).',
+    question: 'What is the purpose of a low-pass filter in a signal processing circuit?',
+    options: ['To amplify high frequencies', 'To block low frequencies', 'To attenuate frequencies higher than the cutoff frequency', 'To convert digital signals to analog'],
+    correct: 2,
+    explanation: 'A low-pass filter passes signals with a frequency lower than a selected cutoff frequency and attenuates signals with frequencies higher than the cutoff frequency.',
   },
+  // Software Engineering
   {
-    domain: 'Electronics & ECE',
-    question: 'What does a transistor primarily do in a digital circuit?',
-    options: ['Store data permanently', 'Act as an electronic switch', 'Convert analog to digital', 'Generate clock signals'],
+    domain: 'Software Engineering',
+    question: 'What is the primary advantage of a Microservices architecture over a Monolithic architecture?',
+    options: ['Easier to debug globally', 'Independent deployment and scaling of services', 'Zero network latency between modules', 'Simpler overall system architecture'],
     correct: 1,
-    explanation: 'In digital circuits, transistors act as switches that can be ON or OFF, forming the basis of logic gates.',
+    explanation: 'Microservices allow teams to deploy, update, and scale individual components independently without affecting the entire application.',
   },
   {
     domain: 'Software Engineering',
-    question: 'What is the primary purpose of a code review?',
-    options: ['Slowing down development', 'Finding bugs and improving code quality', 'Assigning blame', 'Meeting compliance quotas'],
-    correct: 1,
-    explanation: 'Code reviews catch bugs early, improve quality, share knowledge, and ensure best practices.',
+    question: 'Which design pattern is used to ensure a class has only one instance and provides a global point of access to it?',
+    options: ['Factory Method', 'Observer', 'Singleton', 'Decorator'],
+    correct: 2,
+    explanation: 'The Singleton pattern restricts the instantiation of a class to one single instance, which is globally accessible throughout the application.',
+  },
+  // Engineering Basics
+  {
+    domain: 'Engineering Basics',
+    question: 'In fluid mechanics, Bernoulli\'s principle is a statement of the conservation of which quantity?',
+    options: ['Mass', 'Momentum', 'Energy', 'Volume'],
+    correct: 2,
+    explanation: 'Bernoulli\'s equation is derived from the principle of conservation of energy applied to a steady, incompressible fluid flow.',
+  },
+  // Mechanical Engineering
+  {
+    domain: 'Mechanical Engineering',
+    question: 'What type of stress occurs when equal and opposite forces are applied parallel to the surface of an object?',
+    options: ['Tensile stress', 'Compressive stress', 'Shear stress', 'Volumetric stress'],
+    correct: 2,
+    explanation: 'Shear stress is caused by forces acting parallel to the cross-sectional area of the material, attempting to slide one part of the material over another.',
   },
   {
-    domain: 'Software Engineering',
-    question: 'What does CI/CD stand for?',
-    options: ['Continuous Integration / Continuous Deployment', 'Code Integration / Code Deployment', 'Custom Implementation / Custom Design', 'Consistent Integration / Constant Delivery'],
-    correct: 0,
-    explanation: 'CI/CD stands for Continuous Integration and Continuous Deployment (or Delivery), automating the build-test-deploy pipeline.',
-  },
-  {
-    domain: 'Electronics & ECE',
-    question: 'What does VLSI stand for?',
-    options: ['Very Low Speed Integration', 'Very Large Scale Integration', 'Variable Logic System Interface', 'Virtual Logic Simulation Interface'],
-    correct: 1,
-    explanation: 'VLSI stands for Very Large Scale Integration — the process of creating integrated circuits with millions of transistors.',
-  },
+    domain: 'Mechanical Engineering',
+    question: 'In a four-stroke internal combustion engine, during which stroke is the air-fuel mixture ignited?',
+    options: ['Intake stroke', 'Compression stroke', 'Power (Expansion) stroke', 'Exhaust stroke'],
+    correct: 2,
+    explanation: 'Ignition occurs just before the power stroke, causing the expanding gases to push the piston down and generate mechanical work.',
+  }
 ];
 
 /**
