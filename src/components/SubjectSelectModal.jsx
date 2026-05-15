@@ -16,7 +16,9 @@ const STEPS = { SETUP: 'setup', GENERATING: 'generating', QUIZ: 'quiz', RESULT: 
 const QUIZ_TITLE = 'Your personalized quiz';
 
 export default function SubjectSelectModal() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, isStudent } = useAuth();
+
+  if (!isStudent) return null;
 
   const [step, setStep] = useState(STEPS.SETUP);
   const [domainIds, setDomainIds] = useState(() => ['engineering']);

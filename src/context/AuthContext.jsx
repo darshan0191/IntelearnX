@@ -32,22 +32,6 @@ export function AuthProvider({ children }) {
         const profile = await getUserProfile(firebaseUser.uid);
         if (profile) {
           setUser(profile);
-        } else {
-          // Profile doesn't exist yet (edge case) — create minimal one
-          const minimalProfile = {
-            name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
-            email: firebaseUser.email,
-            role: 'student',
-            classCode: '',
-            xp: 0,
-            level: 1,
-            avatar: '🧑‍🎓',
-            loginStreak: 0,
-            lastLogin: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-          };
-          await saveUserProfile(firebaseUser.uid, minimalProfile);
-          setUser({ id: firebaseUser.uid, ...minimalProfile });
         }
       } else {
         setUser(null);
