@@ -14,6 +14,7 @@ const TEMPLATES = [
   { id: 'elegant',    label: 'Elegant',    desc: 'Serif typography, refined look',  accent: '#4CAF82' },
   { id: 'compact',    label: 'Compact',    desc: 'Dense, fits more on one page',    accent: '#E0A546' },
   { id: 'creative',   label: 'Creative',   desc: 'Sidebar accent, modern feel',     accent: '#a78bfa' },
+  { id: 'ats',        label: 'ATS Friendly', desc: 'Standard single-column, parsable',  accent: '#2E2B27' },
 ];
 
 function Section({ title, icon, children, defaultOpen = true }) {
@@ -266,8 +267,105 @@ function CreativePreview({ data, accent }) {
   );
 }
 
+function AtsPreview({ data, accent }) {
+  return (
+    <div className="rp-ats" style={{ '--ra': accent }}>
+      <div className="rp-ats-header">
+        <h1>{data.name || 'Your Name'}</h1>
+        <div className="rp-ats-contact">
+          {[data.email, data.phone, data.location, data.linkedin, data.github, data.website].filter(Boolean).map((c, i) => (
+            <span key={i}>{c}</span>
+          ))}
+        </div>
+      </div>
+
+      <div className="rp-ats-body">
+        {data.summary && (
+          <div className="rp-ats-block">
+            <h3 className="rp-ats-title">Professional Summary</h3>
+            <p className="rp-ats-text">{data.summary}</p>
+          </div>
+        )}
+
+        {data.experience?.length > 0 && (
+          <div className="rp-ats-block">
+            <h3 className="rp-ats-title">Experience</h3>
+            {data.experience.map((e, i) => (
+              <div key={i} className="rp-ats-entry">
+                <div className="rp-ats-row">
+                  <strong>{e.role}</strong>
+                  <span>{e.duration}</span>
+                </div>
+                <div className="rp-ats-row rp-ats-sub">
+                  <span>{e.company}{e.location ? `, ${e.location}` : ''}</span>
+                </div>
+                {e.description && <p className="rp-ats-text">{e.description}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {data.education?.length > 0 && (
+          <div className="rp-ats-block">
+            <h3 className="rp-ats-title">Education</h3>
+            {data.education.map((e, i) => (
+              <div key={i} className="rp-ats-entry">
+                <div className="rp-ats-row">
+                  <strong>{e.degree}</strong>
+                  <span>{e.year}</span>
+                </div>
+                <div className="rp-ats-row rp-ats-sub">
+                  <span>{e.institution}{e.gpa ? ` | GPA: ${e.gpa}` : ''}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {data.projects?.length > 0 && (
+          <div className="rp-ats-block">
+            <h3 className="rp-ats-title">Projects</h3>
+            {data.projects.map((p, i) => (
+              <div key={i} className="rp-ats-entry">
+                <div className="rp-ats-row">
+                  <strong>{p.name}</strong>
+                  {p.link && <span>{p.link}</span>}
+                </div>
+                {p.tech && <div className="rp-ats-sub">Technologies: {p.tech}</div>}
+                {p.description && <p className="rp-ats-text">{p.description}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {data.skills?.length > 0 && (
+          <div className="rp-ats-block">
+            <h3 className="rp-ats-title">Skills</h3>
+            <p className="rp-ats-text">
+              {data.skills.join(', ')}
+            </p>
+          </div>
+        )}
+
+        {data.achievements?.length > 0 && (
+          <div className="rp-ats-block">
+            <h3 className="rp-ats-title">Achievements & Certifications</h3>
+            {data.achievements.map((a, i) => (
+              <div key={i} className="rp-ats-entry rp-ats-achieve">
+                <strong>{a.title}</strong>
+                {a.description && <span> - {a.description}</span>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ResumePreview({ data, template }) {
   const tmpl = TEMPLATES.find(t => t.id === template) || TEMPLATES[0];
+  if (template === 'ats') return <AtsPreview data={data} accent={tmpl.accent} />;
   if (template === 'modern' || template === 'compact' || template === 'elegant') return <ModernPreview data={data} accent={tmpl.accent} />;
   if (template === 'creative') return <CreativePreview data={data} accent={tmpl.accent} />;
   return <ClassicPreview data={data} accent={tmpl.accent} />;

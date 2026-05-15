@@ -12,7 +12,25 @@
 }
 
 .profile-page {
-  max-width: 860px; margin: 0 auto;
+  max-width: 1360px; margin: 0 auto;
+}
+
+.pf-workspace {
+  display: grid;
+  grid-template-columns: 500px 1fr;
+  gap: var(--s6);
+  align-items: start;
+}
+
+.pf-left-panel {
+  display: flex; flex-direction: column; gap: var(--s5);
+}
+
+.pf-right-panel {
+  background: var(--bg-subtle); border: 1px solid var(--border);
+  border-radius: var(--r-xl); overflow-y: auto;
+  box-shadow: var(--card-shadow); padding: var(--s5);
+  position: sticky; top: 80px; max-height: calc(100vh - 100px);
 }
 
 /* ── Hero ── */
@@ -215,7 +233,7 @@
 
 /* ── Stats Grid ── */
 .pf-stats {
-  display: grid; grid-template-columns: repeat(7, 1fr);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
   gap: var(--s3); margin-bottom: var(--s6);
 }
 .pf-stat-card {
@@ -358,8 +376,11 @@
 .pf-empty p { font-size: 0.88rem; }
 
 /* ── Responsive ── */
+@media (max-width: 1100px) {
+  .pf-workspace { grid-template-columns: 1fr; }
+  .pf-right-panel { position: static; max-height: none; padding: var(--s4); }
+}
 @media (max-width: 900px) {
-  .pf-stats { grid-template-columns: repeat(4, 1fr); }
   .pf-details-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 640px) {
