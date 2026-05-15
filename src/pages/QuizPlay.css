@@ -26,7 +26,7 @@
   box-shadow: var(--card-shadow); margin-bottom: var(--s6);
 }
 .question-text {
-  font-family: var(--font-serif); font-size: ; font-weight: 700;
+  font-family: var(--font-serif); font-size: 1.1rem; font-weight: 700;
   line-height: 1.5; color: var(--text); margin-bottom: var(--s6);
 }
 .question-difficulty {
@@ -190,7 +190,7 @@
 .cp-piece:nth-child(10) { left: 45%; animation-delay: 0.55s; }
 
 .cp-title {
-  font-family: var(--font-serif); font-size: ; font-weight: 700;
+  font-family: var(--font-serif); font-size: 1.8rem; font-weight: 700;
   color: var(--text); margin-bottom: var(--s2);
 }
 .cp-sub {

@@ -25,7 +25,7 @@
   box-shadow: 0 0 24px rgba(201,168,76,0.12);
 }
 .qh-header h1 {
-  font-family: var(--font-serif); font-size: ; font-weight: 700;
+  font-family: var(--font-serif); font-size: 1.8rem; font-weight: 700;
   color: var(--text);
   margin-bottom: 2px;
 }
@@ -74,7 +74,7 @@
   color: var(--sc, var(--accent));
 }
 .qh-summary-value {
-  font-family: var(--font-serif); font-size: ; font-weight: 700;
+  font-family: var(--font-serif); font-size: 1.5rem; font-weight: 700;
   color: var(--text);
   line-height: 1;
 }
@@ -209,7 +209,7 @@
   width: 40px; height: 40px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-serif); font-size: ; font-weight: 700;
+  font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700;
   flex-shrink: 0;
   border: 2px solid;
 }
@@ -292,7 +292,7 @@
   color: var(--sc, var(--accent));
 }
 .qh-detail-stat-value {
-  font-family: var(--font-serif); font-size: ; font-weight: 700;
+  font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700;
   color: var(--text);
 }
 .qh-detail-stat-label {

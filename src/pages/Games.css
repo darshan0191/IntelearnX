@@ -24,7 +24,7 @@
   box-shadow: 0 4px 14px rgba(212,100,92,0.12);
 }
 .gm-title {
-  font-family: var(--font-serif); font-size: ; font-weight: 700; color: var(--text); margin-bottom: 4px;
+  font-family: var(--font-serif); font-size: 1.8rem; font-weight: 700; color: var(--text); margin-bottom: 4px;
 }
 .gm-subtitle { font-size: 0.85rem; color: var(--text-muted); }
 
@@ -117,7 +117,7 @@
 }
 
 .gm-card-title {
-  font-family: var(--font-serif); font-size: ; font-weight: 700; color: var(--text); margin: 0;
+  font-family: var(--font-serif); font-size: 1.1rem; font-weight: 700; color: var(--text); margin: 0;
 }
 .gm-card-sub {
   font-size: 0.73rem; color: var(--text-muted); margin: 0;

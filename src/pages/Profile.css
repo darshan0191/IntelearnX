@@ -65,7 +65,7 @@
   box-shadow: 0 0 0 3px var(--accent-muted);
 }
 .pf-name {
-  font-family: var(--font-serif); font-size: ; font-weight: 700;
+  font-family: var(--font-serif); font-size: 2.2rem; font-weight: 700;
   color: var(--text); margin-bottom: var(--s1);
 }
 .pf-email {
@@ -246,7 +246,7 @@
 .pf-stat-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hover); }
 .pf-stat-icon { font-size: 1.1rem; color: var(--sc, var(--accent)); }
 .pf-stat-value {
-  font-family: var(--font-serif); font-size: ; font-weight: 700;
+  font-family: var(--font-serif); font-size: 1.1rem; font-weight: 700;
   color: var(--text); line-height: 1;
 }
 .pf-stat-label { font-size: 0.63rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }

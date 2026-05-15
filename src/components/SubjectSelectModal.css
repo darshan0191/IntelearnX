@@ -729,7 +729,7 @@
 /* title — plain, no gradient clip (avoids edge clipping) */
 .ssm-gen__title {
   position: relative; z-index: 1;
-  font-family: var(--font-serif); font-size: ; font-weight: 700;
+  font-family: var(--font-serif); font-size: 1.75rem; font-weight: 700;
   color: var(--text);
   margin: 0 0 var(--s4);
   line-height: 1.2;
