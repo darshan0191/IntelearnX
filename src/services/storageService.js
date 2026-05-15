@@ -153,6 +153,7 @@ export async function getPerformanceData(uid) {
     total: data.total,
   }));
   const domainWeakAreas = domainPerformance.filter((t) => t.accuracy < 60 && t.total > 0).sort((a, b) => a.accuracy - b.accuracy);
+  const domainStrongAreas = domainPerformance.filter((t) => t.accuracy >= 80 && t.total > 0).sort((a, b) => b.accuracy - a.accuracy);
 
   const recentTrend = history.slice(-10).map((quiz, idx) => ({
     quiz: idx + 1,
@@ -175,6 +176,7 @@ export async function getPerformanceData(uid) {
     strongAreas,
     topicPerformance,
     domainWeakAreas,
+    domainStrongAreas,
     domainPerformance,
   };
 }

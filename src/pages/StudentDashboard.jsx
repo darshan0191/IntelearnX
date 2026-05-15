@@ -15,6 +15,7 @@ import {
 import {
   getKeywordRadarRows,
   buildFallbackReviewTopics,
+  getTopicDescription,
 } from '../utils/dashboardInsights';
 import { generateReviewSuggestionsFromQuiz, domainIdToLabel } from '../services/personalizedQuizService';
 import SemanticSearch from '../components/SemanticSearch';
@@ -69,6 +70,48 @@ function DifficultyTooltip({ active, payload }) {
       <span>Accuracy: {d.accuracy}%</span>
       <span>Correct: {d.correct} / {d.total}</span>
     </div>
+  );
+}
+
+function ExpandableTopic({ t, type }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  const title = t.name || (t.topic ? t.topic.replace('Personalized study > Your personalized quiz', 'Onboarding Quiz') : '');
+  const description = getTopicDescription(title);
+
+  return (
+    <li 
+      className={`sd-suggestion sd-suggestion--${type}`} 
+      onClick={() => setExpanded(!expanded)}
+      style={{ cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column' }}
+      title="Click to see what this topic consists of"
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', width: '100%' }}>
+        <span className="sd-suggestion-icon" aria-hidden style={type === 'celebrate' ? { color: '#4CAF82', background: 'rgba(76,175,130,0.12)' } : {}}>
+          {type === 'focus' ? <LuTriangleAlert /> : <LuStar />}
+        </span>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong>{title}</strong>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{expanded ? '▲' : '▼'}</span>
+          </div>
+          {type === 'focus' ? <p>{t.reason}</p> : <p>Accuracy: {t.accuracy}% across {t.total} questions</p>}
+        </div>
+      </div>
+      {expanded && (
+        <div className="animate-fadeIn" style={{ 
+          marginTop: '0.75rem', 
+          paddingTop: '0.75rem', 
+          borderTop: '1px solid var(--border)',
+          color: 'var(--text-secondary)',
+          fontSize: '0.9rem',
+          paddingLeft: '2.5rem',
+          lineHeight: '1.4'
+        }}>
+          <strong>What it is:</strong> {description}
+        </div>
+      )}
+    </li>
   );
 }
 
@@ -561,29 +604,46 @@ export default function StudentDashboard() {
       )}
 
       <section className="sd-suggestions-section">
+        <div className="sd-suggestions-grid" style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
           <div className="glass-card sd-suggestions-card sd-suggestions-card--single">
             <h3 className="card-title sd-card-title">
-              <LuLightbulb /> Suggestions
+              <LuLightbulb /> Weak Topics & Focus Areas
               {reviewLoading && <LuLoader className="sd-inline-loader pq-spin" aria-hidden />}
             </h3>
             <p className="sd-review-summary">{displayReview.summary}</p>
             <p className="sd-review-meta sd-muted">
-              {displayReview.source === 'gemini' ? 'Personalized with Gemini from your quiz data.' : 'Suggestions from your scores (add VITE_GEMINI_API_KEY for AI wording).'}
+              {displayReview.source === 'gemini' ? 'Personalized with Gemini from your quiz data.' : 'Suggestions from your scores.'}
             </p>
             <ul className="sd-suggestion-list sd-review-topic-list">
               {displayReview.topics.map((t, idx) => (
-                <li key={`${t.name}-${idx}`} className="sd-suggestion sd-suggestion--focus">
-                  <span className="sd-suggestion-icon" aria-hidden>
-                    <LuTriangleAlert />
-                  </span>
-                  <div>
-                    <strong>{t.name}</strong>
-                    <p>{t.reason}</p>
-                  </div>
-                </li>
+                <ExpandableTopic key={`${t.name}-${idx}`} t={t} type="focus" />
               ))}
             </ul>
           </div>
+
+          <div className="glass-card sd-suggestions-card sd-suggestions-card--single">
+            <h3 className="card-title sd-card-title">
+              <LuTrophy /> Strong Topics
+            </h3>
+            <p className="sd-review-summary">You are performing exceptionally well in these areas!</p>
+            <p className="sd-review-meta sd-muted">Keep it up and tackle harder questions.</p>
+            {performance && (performance.strongAreas?.length > 0 || performance.domainStrongAreas?.length > 0) ? (
+              <ul className="sd-suggestion-list sd-review-topic-list">
+                {[...(performance.strongAreas || []), ...(performance.domainStrongAreas || [])]
+                  .filter((v, i, a) => a.findIndex(t => t.topic === v.topic) === i) // deduplicate by topic name
+                  .sort((a, b) => b.accuracy - a.accuracy)
+                  .slice(0, 5)
+                  .map((t, idx) => (
+                    <ExpandableTopic key={`strong-${idx}`} t={t} type="celebrate" />
+                ))}
+              </ul>
+            ) : (
+              <div className="sd-muted" style={{ marginTop: '1rem' }}>
+                Complete more quizzes to discover your strong topics!
+              </div>
+            )}
+          </div>
+        </div>
       </section>
 
       <div className="dashboard-bottom sd-bottom sd-bottom--single">

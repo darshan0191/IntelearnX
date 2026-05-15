@@ -125,6 +125,9 @@ export default function Profile() {
 
   return (
     <div className="profile-page animate-fadeIn">
+      <div className="pf-workspace">
+        {/* ── Left Panel ── */}
+        <div className="pf-left-panel">
 
       {/* ── Hero Card ── */}
       <div className="pf-hero">
@@ -328,6 +331,10 @@ export default function Profile() {
           </div>
         </div>
       </div>
+      </div>
+
+      {/* ── Right Panel ── */}
+      <div className="pf-right-panel">
 
       {/* ── Stats Grid ── */}
       <div className="pf-stats">
@@ -416,6 +423,9 @@ export default function Profile() {
             <p>No badges here yet — keep quizzing!</p>
           </div>
         )}
+      </div>
+
+      </div>
       </div>
     </div>
   );

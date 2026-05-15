@@ -14,6 +14,7 @@ const TEMPLATES = [
   { id: 'elegant',    label: 'Elegant',    desc: 'Serif typography, refined look',  accent: '#4CAF82' },
   { id: 'compact',    label: 'Compact',    desc: 'Dense, fits more on one page',    accent: '#E0A546' },
   { id: 'creative',   label: 'Creative',   desc: 'Sidebar accent, modern feel',     accent: '#a78bfa' },
+  { id: 'ats',        label: 'ATS Friendly', desc: 'Standard single-column, parsable',  accent: '#2E2B27' },
 ];
 
 function Section({ title, icon, children, defaultOpen = true }) {
@@ -266,8 +267,105 @@ function CreativePreview({ data, accent }) {
   );
 }
 
+function AtsPreview({ data, accent }) {
+  return (
+    <div className="rp-ats" style={{ '--ra': accent }}>
+      <div className="rp-ats-header">
+        <h1>{data.name || 'Your Name'}</h1>
+        <div className="rp-ats-contact">
+          {[data.email, data.phone, data.location, data.linkedin, data.github, data.website].filter(Boolean).map((c, i) => (
+            <span key={i}>{c}</span>
+          ))}
+        </div>
+      </div>
+
+      <div className="rp-ats-body">
+        {data.summary && (
+          <div className="rp-ats-block">
+            <h3 className="rp-ats-title">Professional Summary</h3>
+            <p className="rp-ats-text">{data.summary}</p>
+          </div>
+        )}
+
+        {data.experience?.length > 0 && (
+          <div className="rp-ats-block">
+            <h3 className="rp-ats-title">Experience</h3>
+            {data.experience.map((e, i) => (
+              <div key={i} className="rp-ats-entry">
+                <div className="rp-ats-row">
+                  <strong>{e.role}</strong>
+                  <span>{e.duration}</span>
+                </div>
+                <div className="rp-ats-row rp-ats-sub">
+                  <span>{e.company}{e.location ? `, ${e.location}` : ''}</span>
+                </div>
+                {e.description && <p className="rp-ats-text">{e.description}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {data.education?.length > 0 && (
+          <div className="rp-ats-block">
+            <h3 className="rp-ats-title">Education</h3>
+            {data.education.map((e, i) => (
+              <div key={i} className="rp-ats-entry">
+                <div className="rp-ats-row">
+                  <strong>{e.degree}</strong>
+                  <span>{e.year}</span>
+                </div>
+                <div className="rp-ats-row rp-ats-sub">
+                  <span>{e.institution}{e.gpa ? ` | GPA: ${e.gpa}` : ''}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {data.projects?.length > 0 && (
+          <div className="rp-ats-block">
+            <h3 className="rp-ats-title">Projects</h3>
+            {data.projects.map((p, i) => (
+              <div key={i} className="rp-ats-entry">
+                <div className="rp-ats-row">
+                  <strong>{p.name}</strong>
+                  {p.link && <span>{p.link}</span>}
+                </div>
+                {p.tech && <div className="rp-ats-sub">Technologies: {p.tech}</div>}
+                {p.description && <p className="rp-ats-text">{p.description}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {data.skills?.length > 0 && (
+          <div className="rp-ats-block">
+            <h3 className="rp-ats-title">Skills</h3>
+            <p className="rp-ats-text">
+              {data.skills.join(', ')}
+            </p>
+          </div>
+        )}
+
+        {data.achievements?.length > 0 && (
+          <div className="rp-ats-block">
+            <h3 className="rp-ats-title">Achievements & Certifications</h3>
+            {data.achievements.map((a, i) => (
+              <div key={i} className="rp-ats-entry rp-ats-achieve">
+                <strong>{a.title}</strong>
+                {a.description && <span> - {a.description}</span>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ResumePreview({ data, template }) {
   const tmpl = TEMPLATES.find(t => t.id === template) || TEMPLATES[0];
+  if (template === 'ats') return <AtsPreview data={data} accent={tmpl.accent} />;
   if (template === 'modern' || template === 'compact' || template === 'elegant') return <ModernPreview data={data} accent={tmpl.accent} />;
   if (template === 'creative') return <CreativePreview data={data} accent={tmpl.accent} />;
   return <ClassicPreview data={data} accent={tmpl.accent} />;
@@ -359,8 +457,7 @@ export default function ResumeBuilder() {
 
       <div className="rb-workspace">
         {/* ── Edit Panel ── */}
-        {(activeTab === 'edit' || window.innerWidth >= 1100) && (
-          <div className={`rb-editor ${activeTab === 'preview' ? 'rb-editor-hidden' : ''}`}>
+        <div className={`rb-editor ${activeTab !== 'edit' ? 'rb-mobile-hidden' : ''}`}>
 
             <Section title="Personal Info" icon={<LuUser />}>
               <div className="rb-grid-2">
@@ -369,11 +466,17 @@ export default function ResumeBuilder() {
                 <Field label="Email" value={data.email || ''} onChange={v => update('email', v)} placeholder="jane@email.com" />
                 <Field label="Phone" value={data.phone || ''} onChange={v => update('phone', v)} placeholder="+91 98765 43210" />
                 <Field label="Location" value={data.location || ''} onChange={v => update('location', v)} placeholder="Bangalore, India" />
-                <Field label="LinkedIn" value={data.linkedin || ''} onChange={v => update('linkedin', v)} placeholder="linkedin.com/in/jane" />
-                <Field label="GitHub" value={data.github || ''} onChange={v => update('github', v)} placeholder="github.com/jane" />
                 <Field label="Website" value={data.website || ''} onChange={v => update('website', v)} placeholder="janedev.com" />
+                <div className="rb-field-span-2">
+                  <Field label="LinkedIn" value={data.linkedin || ''} onChange={v => update('linkedin', v)} placeholder="linkedin.com/in/jane" />
+                </div>
+                <div className="rb-field-span-2">
+                  <Field label="GitHub" value={data.github || ''} onChange={v => update('github', v)} placeholder="github.com/jane" />
+                </div>
+                <div className="rb-field-full rb-field-span-2">
+                  <Field label="Professional Summary" value={data.summary || ''} onChange={v => update('summary', v)} placeholder="Brief overview of your skills and goals…" multiline />
+                </div>
               </div>
-              <Field label="Professional Summary" value={data.summary || ''} onChange={v => update('summary', v)} placeholder="Brief overview of your skills and goals…" multiline />
             </Section>
 
             <Section title="Education" icon={<LuGraduationCap />}>
@@ -401,8 +504,10 @@ export default function ResumeBuilder() {
                     <Field label="Company" value={e.company || ''} onChange={v => updateArr('experience', i, 'company', v)} placeholder="Acme Corp" />
                     <Field label="Duration" value={e.duration || ''} onChange={v => updateArr('experience', i, 'duration', v)} placeholder="Jun 2024 – Aug 2024" />
                     <Field label="Location" value={e.location || ''} onChange={v => updateArr('experience', i, 'location', v)} placeholder="Remote" />
+                    <div className="rb-field-span-2">
+                      <Field label="Description" value={e.description || ''} onChange={v => updateArr('experience', i, 'description', v)} placeholder="Key responsibilities and achievements…" multiline />
+                    </div>
                   </div>
-                  <Field label="Description" value={e.description || ''} onChange={v => updateArr('experience', i, 'description', v)} placeholder="Key responsibilities and achievements…" multiline />
                   <button className="rb-remove-btn" onClick={() => removeItem('experience', i)}><LuTrash2 /> Remove</button>
                 </div>
               ))}
@@ -417,9 +522,13 @@ export default function ResumeBuilder() {
                   <div className="rb-grid-2">
                     <Field label="Project Name" value={p.name || ''} onChange={v => updateArr('projects', i, 'name', v)} placeholder="IntelearnX" />
                     <Field label="Tech Stack" value={p.tech || ''} onChange={v => updateArr('projects', i, 'tech', v)} placeholder="React, Firebase, Node.js" />
-                    <Field label="Link" value={p.link || ''} onChange={v => updateArr('projects', i, 'link', v)} placeholder="github.com/jane/project" />
+                    <div className="rb-field-span-2">
+                      <Field label="Link" value={p.link || ''} onChange={v => updateArr('projects', i, 'link', v)} placeholder="github.com/jane/project" />
+                    </div>
+                    <div className="rb-field-span-2">
+                      <Field label="Description" value={p.description || ''} onChange={v => updateArr('projects', i, 'description', v)} placeholder="What it does and your role…" multiline />
+                    </div>
                   </div>
-                  <Field label="Description" value={p.description || ''} onChange={v => updateArr('projects', i, 'description', v)} placeholder="What it does and your role…" multiline />
                   <button className="rb-remove-btn" onClick={() => removeItem('projects', i)}><LuTrash2 /> Remove</button>
                 </div>
               ))}
@@ -453,8 +562,14 @@ export default function ResumeBuilder() {
             <Section title="Achievements & Certifications" icon={<LuGraduationCap />} defaultOpen={false}>
               {(data.achievements || []).map((a, i) => (
                 <div key={i} className="rb-list-item">
-                  <Field label="Title" value={a.title || ''} onChange={v => updateArr('achievements', i, 'title', v)} placeholder="Winner — Hackathon 2024" />
-                  <Field label="Description" value={a.description || ''} onChange={v => updateArr('achievements', i, 'description', v)} placeholder="Brief detail…" multiline />
+                  <div className="rb-grid-2">
+                    <div className="rb-field-span-2">
+                      <Field label="Title" value={a.title || ''} onChange={v => updateArr('achievements', i, 'title', v)} placeholder="Winner — Hackathon 2024" />
+                    </div>
+                    <div className="rb-field-span-2">
+                      <Field label="Description" value={a.description || ''} onChange={v => updateArr('achievements', i, 'description', v)} placeholder="Brief detail…" multiline />
+                    </div>
+                  </div>
                   <button className="rb-remove-btn" onClick={() => removeItem('achievements', i)}><LuTrash2 /> Remove</button>
                 </div>
               ))}
@@ -463,11 +578,10 @@ export default function ResumeBuilder() {
               </button>
             </Section>
 
-          </div>
-        )}
+        </div>
 
         {/* ── Preview Panel ── */}
-        <div className={`rb-preview-panel ${activeTab === 'edit' ? 'rb-preview-hidden' : ''}`}>
+        <div className={`rb-preview-panel ${activeTab !== 'preview' ? 'rb-mobile-hidden' : ''}`}>
           <div className="rb-preview-wrap" ref={printRef}>
             <ResumePreview data={data} template={template} />
           </div>

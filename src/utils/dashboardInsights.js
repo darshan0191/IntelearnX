@@ -309,3 +309,43 @@ export function buildFallbackReviewTopics(performance) {
 
   return { summary, topics: topics.slice(0, 5), source: 'fallback' };
 }
+
+/**
+ * Returns a brief description of what a topic consists of.
+ */
+export function getTopicDescription(topicName) {
+  if (!topicName) return '';
+  const normalized = topicName.toLowerCase();
+  
+  const map = {
+    'dsa': 'Data Structures and Algorithms involves organizing data efficiently (arrays, trees, graphs) and using step-by-step procedures (sorting, searching) to solve complex problems.',
+    'arrays & strings': 'Fundamental data structures stored continuously in memory. Focuses on string manipulation, two-pointer techniques, and sliding window algorithms.',
+    'trees & graphs': 'Non-linear data structures representing hierarchical or networked data. Topics include binary trees, BSTs, DFS/BFS traversals, and shortest path algorithms.',
+    'full stack': 'The complete cycle of web development, including both the user-facing front-end (HTML/CSS/JS, React) and the server-side back-end (Node.js, databases).',
+    'frontend': 'The client-side of web applications. Consists of UI/UX implementation, DOM manipulation, responsive design, and framework usage like React or Vue.',
+    'backend': 'The server-side of web applications. Covers server logic, API design (REST/GraphQL), database management, authentication, and server environments like Node.js.',
+    'oop': 'Object-Oriented Programming. A paradigm centered around objects rather than functions. Key concepts include inheritance, encapsulation, polymorphism, and abstraction.',
+    'software engineering': 'The systematic application of engineering approaches to software development. Covers SDLC, Agile methodologies, system design, testing, and CI/CD pipelines.',
+    'sdlc & methodologies': 'Software Development Life Cycle. The process for planning, creating, testing, and deploying an information system, including frameworks like Agile and Scrum.',
+    'testing': 'The process of evaluating a system or its components to find whether it satisfies the specified requirements. Includes unit, integration, and end-to-end testing.',
+    'finance': 'The management, creation, and study of money and investments. Covers personal budgeting, market analysis, financial instruments, and corporate finance.',
+    'personal finance': 'Management of an individual\'s money, including saving, investing, budgeting, banking, insurance, and retirement planning.',
+    'markets & investing': 'The buying and selling of financial instruments like stocks, bonds, and mutual funds to generate wealth over time.',
+    'engineering': 'The application of science and math to solve problems. Involves design, analysis, prototyping, and optimization of structures, machines, or systems.',
+    'computer science': 'The study of computers and computational systems, spanning theory, algorithms, hardware, software design, and artificial intelligence.',
+    'electronics & ece': 'Electronics and Communication Engineering. Deals with electronic devices, circuits, communication equipment, microprocessors, and signal processing.',
+    'cybersecurity': 'The practice of protecting systems, networks, and programs from digital attacks, unauthorized access, and data breaches.',
+    'ai & ml': 'Artificial Intelligence and Machine Learning. Training models on data to make predictions, recognize patterns, or automate tasks without explicit programming.',
+    'embedded systems': 'Computer systems with a dedicated function within a larger mechanical or electrical system, often involving microcontrollers and real-time constraints.',
+    'onboarding quiz': 'An initial assessment covering a mix of foundational domains chosen during sign-up to gauge starting proficiency.',
+  };
+
+  for (const [key, desc] of Object.entries(map)) {
+    if (normalized.includes(key)) {
+      return desc;
+    }
+  }
+
+  return `This topic encompasses the core theories, practical applications, and advanced concepts related to ${topicName.replace('Personalized study > ', '')}.`;
+}
+
