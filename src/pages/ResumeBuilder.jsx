@@ -359,8 +359,7 @@ export default function ResumeBuilder() {
 
       <div className="rb-workspace">
         {/* ── Edit Panel ── */}
-        {(activeTab === 'edit' || window.innerWidth >= 1100) && (
-          <div className={`rb-editor ${activeTab === 'preview' ? 'rb-editor-hidden' : ''}`}>
+        <div className={`rb-editor ${activeTab !== 'edit' ? 'rb-mobile-hidden' : ''}`}>
 
             <Section title="Personal Info" icon={<LuUser />}>
               <div className="rb-grid-2">
@@ -369,11 +368,17 @@ export default function ResumeBuilder() {
                 <Field label="Email" value={data.email || ''} onChange={v => update('email', v)} placeholder="jane@email.com" />
                 <Field label="Phone" value={data.phone || ''} onChange={v => update('phone', v)} placeholder="+91 98765 43210" />
                 <Field label="Location" value={data.location || ''} onChange={v => update('location', v)} placeholder="Bangalore, India" />
-                <Field label="LinkedIn" value={data.linkedin || ''} onChange={v => update('linkedin', v)} placeholder="linkedin.com/in/jane" />
-                <Field label="GitHub" value={data.github || ''} onChange={v => update('github', v)} placeholder="github.com/jane" />
                 <Field label="Website" value={data.website || ''} onChange={v => update('website', v)} placeholder="janedev.com" />
+                <div className="rb-field-span-2">
+                  <Field label="LinkedIn" value={data.linkedin || ''} onChange={v => update('linkedin', v)} placeholder="linkedin.com/in/jane" />
+                </div>
+                <div className="rb-field-span-2">
+                  <Field label="GitHub" value={data.github || ''} onChange={v => update('github', v)} placeholder="github.com/jane" />
+                </div>
+                <div className="rb-field-full rb-field-span-2">
+                  <Field label="Professional Summary" value={data.summary || ''} onChange={v => update('summary', v)} placeholder="Brief overview of your skills and goals…" multiline />
+                </div>
               </div>
-              <Field label="Professional Summary" value={data.summary || ''} onChange={v => update('summary', v)} placeholder="Brief overview of your skills and goals…" multiline />
             </Section>
 
             <Section title="Education" icon={<LuGraduationCap />}>
@@ -401,8 +406,10 @@ export default function ResumeBuilder() {
                     <Field label="Company" value={e.company || ''} onChange={v => updateArr('experience', i, 'company', v)} placeholder="Acme Corp" />
                     <Field label="Duration" value={e.duration || ''} onChange={v => updateArr('experience', i, 'duration', v)} placeholder="Jun 2024 – Aug 2024" />
                     <Field label="Location" value={e.location || ''} onChange={v => updateArr('experience', i, 'location', v)} placeholder="Remote" />
+                    <div className="rb-field-span-2">
+                      <Field label="Description" value={e.description || ''} onChange={v => updateArr('experience', i, 'description', v)} placeholder="Key responsibilities and achievements…" multiline />
+                    </div>
                   </div>
-                  <Field label="Description" value={e.description || ''} onChange={v => updateArr('experience', i, 'description', v)} placeholder="Key responsibilities and achievements…" multiline />
                   <button className="rb-remove-btn" onClick={() => removeItem('experience', i)}><LuTrash2 /> Remove</button>
                 </div>
               ))}
@@ -417,9 +424,13 @@ export default function ResumeBuilder() {
                   <div className="rb-grid-2">
                     <Field label="Project Name" value={p.name || ''} onChange={v => updateArr('projects', i, 'name', v)} placeholder="IntelearnX" />
                     <Field label="Tech Stack" value={p.tech || ''} onChange={v => updateArr('projects', i, 'tech', v)} placeholder="React, Firebase, Node.js" />
-                    <Field label="Link" value={p.link || ''} onChange={v => updateArr('projects', i, 'link', v)} placeholder="github.com/jane/project" />
+                    <div className="rb-field-span-2">
+                      <Field label="Link" value={p.link || ''} onChange={v => updateArr('projects', i, 'link', v)} placeholder="github.com/jane/project" />
+                    </div>
+                    <div className="rb-field-span-2">
+                      <Field label="Description" value={p.description || ''} onChange={v => updateArr('projects', i, 'description', v)} placeholder="What it does and your role…" multiline />
+                    </div>
                   </div>
-                  <Field label="Description" value={p.description || ''} onChange={v => updateArr('projects', i, 'description', v)} placeholder="What it does and your role…" multiline />
                   <button className="rb-remove-btn" onClick={() => removeItem('projects', i)}><LuTrash2 /> Remove</button>
                 </div>
               ))}
@@ -453,8 +464,14 @@ export default function ResumeBuilder() {
             <Section title="Achievements & Certifications" icon={<LuGraduationCap />} defaultOpen={false}>
               {(data.achievements || []).map((a, i) => (
                 <div key={i} className="rb-list-item">
-                  <Field label="Title" value={a.title || ''} onChange={v => updateArr('achievements', i, 'title', v)} placeholder="Winner — Hackathon 2024" />
-                  <Field label="Description" value={a.description || ''} onChange={v => updateArr('achievements', i, 'description', v)} placeholder="Brief detail…" multiline />
+                  <div className="rb-grid-2">
+                    <div className="rb-field-span-2">
+                      <Field label="Title" value={a.title || ''} onChange={v => updateArr('achievements', i, 'title', v)} placeholder="Winner — Hackathon 2024" />
+                    </div>
+                    <div className="rb-field-span-2">
+                      <Field label="Description" value={a.description || ''} onChange={v => updateArr('achievements', i, 'description', v)} placeholder="Brief detail…" multiline />
+                    </div>
+                  </div>
                   <button className="rb-remove-btn" onClick={() => removeItem('achievements', i)}><LuTrash2 /> Remove</button>
                 </div>
               ))}
@@ -463,11 +480,10 @@ export default function ResumeBuilder() {
               </button>
             </Section>
 
-          </div>
-        )}
+        </div>
 
         {/* ── Preview Panel ── */}
-        <div className={`rb-preview-panel ${activeTab === 'edit' ? 'rb-preview-hidden' : ''}`}>
+        <div className={`rb-preview-panel ${activeTab !== 'preview' ? 'rb-mobile-hidden' : ''}`}>
           <div className="rb-preview-wrap" ref={printRef}>
             <ResumePreview data={data} template={template} />
           </div>
