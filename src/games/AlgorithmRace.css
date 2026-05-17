@@ -153,7 +153,7 @@
   background: var(--card);
 }
 .ar-screen-icon { font-size: 3rem; }
-.ar-screen h2 { font-family: var(--font-serif); font-size: ; font-weight: 700; color: var(--text); margin: 0; }
+.ar-screen h2 { font-family: var(--font-serif); font-size: 1.8rem; font-weight: 700; color: var(--text); margin: 0; }
 .ar-screen p  { font-size: 0.9rem; color: var(--text-secondary); margin: 0; max-width: 340px; }
 .ar-final { font-size: 1rem !important; color: var(--warning) !important; }
 .ar-rules {

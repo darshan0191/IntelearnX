@@ -274,7 +274,7 @@ ul, ol { list-style: none; }
   position: relative; z-index: 1;
 }
 .stat-card .stat-value {
-  font-family: var(--font-serif); font-size: ; font-weight: 700; line-height: 1; margin-bottom: var(--s1);
+  font-family: var(--font-serif); font-size: 1.8rem; font-weight: 700; line-height: 1; margin-bottom: var(--s1);
   color: var(--text); position: relative; z-index: 1;
 }
 .stat-card .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 400; position: relative; z-index: 1; }

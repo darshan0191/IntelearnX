@@ -18,7 +18,7 @@
   margin-bottom: var(--s8);
 }
 .lb-title {
-  font-family: var(--font-serif); font-size: ; font-weight: 700;
+  font-family: var(--font-serif); font-size: 2.2rem; font-weight: 700;
   color: var(--text);
   display: flex;
   align-items: center;

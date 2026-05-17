@@ -15,7 +15,7 @@
   font-size: 1.4rem; color: var(--accent); flex-shrink: 0;
 }
 .cq-header-info h1 {
-  font-family: var(--font-serif); font-size: ; font-weight: 700;
+  font-family: var(--font-serif); font-size: 1.8rem; font-weight: 700;
   margin-bottom: 3px;
 }
 .cq-header-info p { font-size: 0.83rem; color: var(--text-muted); }
@@ -210,7 +210,7 @@
   animation: fadeInUp var(--dur-slow) var(--ease-out);
 }
 .cq-success-icon { font-size: 3rem; color: var(--success); margin-bottom: var(--s4); }
-.cq-success-card h2 { font-family: var(--font-serif); font-size: ; font-weight: 700; margin-bottom: var(--s2); }
+.cq-success-card h2 { font-family: var(--font-serif); font-size: 2.2rem; font-weight: 700; margin-bottom: var(--s2); }
 .cq-success-card p { color: var(--text-muted); }
 
 /* Responsive */

@@ -36,7 +36,7 @@ function ProtectedRoute({ children, roles }) {
 }
 
 function App() {
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading, user, isStudent } = useAuth();
 
   if (loading) {
     return (
@@ -49,7 +49,7 @@ function App() {
 
   return (
     <>
-      {isAuthenticated && user && user.role === 'student' && !user.introQuizCompleted && <SubjectSelectModal />}
+      {isAuthenticated && isStudent && !user?.introQuizCompleted && <SubjectSelectModal />}
       <Routes>
       {/* Public routes */}
       <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Landing />} />
