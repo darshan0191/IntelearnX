@@ -6,11 +6,13 @@
  *
  * Reuses:
  *  - PDF.js CDN loader from pdfQuizService.js
- *  - geminiGenerate() from openaiClient.js (rate-limited, retried)
- *  - validateEngineeringDomain() from engineeringDomainGuard.js
+ *  - geminiGenerate() from geminiaiClient.js (rate-limited, retried)
+ *
+ * It combines raw notes into formatted markdown and ensures
+ * only domain-relevant content is stored.
  */
 
-import { geminiGenerate, isGeminiConfigured } from './openaiClient';
+import { geminiGenerate, isGeminiConfigured } from './geminiaiClient';
 import { validateEngineeringDomain, OUT_OF_DOMAIN_SHORT } from '../utils/engineeringDomainGuard';
 
 // ─── PDF.js CDN (same version as pdfQuizService) ───

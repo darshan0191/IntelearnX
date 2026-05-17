@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { geminiGenerate, isGeminiConfigured } from '../services/openaiClient';
+import { geminiGenerate, isGeminiConfigured } from '../services/geminiaiClient';
 import { retrieveContext, isVectorDbConfigured } from '../services/vectorService';
 import { validateEngineeringDomain, OUT_OF_DOMAIN_MESSAGE } from '../utils/engineeringDomainGuard';
 import {

@@ -2,7 +2,7 @@
  * Question Paper Service — Multi-PDF → 3 Sets of Question Papers
  */
 
-import { geminiGenerate, isGeminiConfigured } from './openaiClient';
+import { geminiGenerate, isGeminiConfigured } from './geminiaiClient';
 import { validateEngineeringDomain, OUT_OF_DOMAIN_SHORT } from '../utils/engineeringDomainGuard';
 import { extractTextFromPdf } from './theoryBankService';
 

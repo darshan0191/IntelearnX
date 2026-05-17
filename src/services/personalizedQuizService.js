@@ -9,7 +9,7 @@
 
 import quizData from '../data/quizData.js';
 import { isVectorDbConfigured, searchQuizKnowledge, storeQuizKnowledge } from './vectorService';
-import { geminiGenerate, geminiGenerateSafe, isGeminiConfigured, isInCooldown } from './openaiClient';
+import { geminiGenerate, geminiGenerateSafe, isGeminiConfigured, isInCooldown } from './geminiaiClient';
 import { validateEngineeringDomain, OUT_OF_DOMAIN_SHORT } from '../utils/engineeringDomainGuard';
 import { shuffleQuestionOptions } from '../utils/shuffleOptions';
 

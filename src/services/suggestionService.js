@@ -16,7 +16,7 @@
  *  - Visual diagrams (Mermaid-based topic maps)
  */
 
-import { geminiGenerate, geminiGenerateSafe, isGeminiConfigured, isInCooldown } from './openaiClient';
+import { geminiGenerate, geminiGenerateSafe, isGeminiConfigured, isInCooldown } from './geminiaiClient';
 import { getPerformanceData, getQuizHistory, getUserProfile, getUserBadges } from './storageService';
 import { domainIdToLabel } from './personalizedQuizService';
 import { isIntroQuizNoiseTopic } from './aiService';

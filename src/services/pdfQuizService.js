@@ -14,7 +14,7 @@ import {
   retrieveContext,
   storeQuizKnowledge,
 } from './vectorService';
-import { geminiGenerate, isGeminiConfigured } from './openaiClient';
+import { geminiGenerate, isGeminiConfigured } from './geminiaiClient';
 import { validateEngineeringDomain, OUT_OF_DOMAIN_SHORT } from '../utils/engineeringDomainGuard';
 
 // CDN version pinned to a stable 3.x build that works reliably in browsers

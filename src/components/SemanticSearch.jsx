@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { semanticSearch, isVectorDbConfigured, retrieveContext, cleanTextForEmbedding } from '../services/vectorService';
 import { getQuizHistory } from '../services/storageService';
-import { geminiGenerate, isGeminiConfigured } from '../services/openaiClient';
+import { geminiGenerate, isGeminiConfigured } from '../services/geminiaiClient';
 import { validateEngineeringDomain, OUT_OF_DOMAIN_MESSAGE } from '../utils/engineeringDomainGuard';
 import {
   LuSearch, LuLoader, LuSparkles, LuBookOpen, LuFileText,
