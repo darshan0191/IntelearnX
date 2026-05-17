@@ -336,23 +336,49 @@ export default function Profile() {
       {/* ── Right Panel ── */}
       <div className="pf-right-panel">
 
-      {/* ── Stats Grid ── */}
-      <div className="pf-stats">
-        {[
-          { icon: <LuZap />,      value: user?.xp || 0,                  label: 'Total XP',     color: '#D4645C' },
-          { icon: <LuStar />,     value: `Lv. ${level}`,                 label: 'Level',        color: '#10b981' },
-          { icon: <LuTrophy />,   value: earnedCount,                    label: 'Badges',       color: '#fbbf24' },
-          { icon: <LuTarget />,   value: `${performance.overallAccuracy}%`, label: 'Accuracy',  color: '#3b82f6' },
-          { icon: <LuBookOpen />, value: performance.totalQuizzes,       label: 'Quizzes',      color: '#8b5cf6' },
-          { icon: <LuFlame />,    value: user?.loginStreak || 0,         label: 'Day Streak',   color: '#E0A546' },
-          { icon: <LuCalendar />, value: performance.totalCorrect || 0,  label: 'Correct Ans.', color: '#06b6d4' },
-        ].map((s, i) => (
-          <div key={i} className="pf-stat-card" style={{ '--sc': s.color }}>
-            <span className="pf-stat-icon">{s.icon}</span>
-            <span className="pf-stat-value">{s.value}</span>
-            <span className="pf-stat-label">{s.label}</span>
+      {/* ── 30-Day Learning Journey ── */}
+      <div className="pf-streak-card">
+        <div className="pf-streak-header">
+          <h2 className="pf-section-title" style={{ marginBottom: 0 }}>
+            <LuFlame style={{ color: '#E0A546' }} /> Learning Streak
+          </h2>
+          <div className="pf-streak-metrics">
+            <span className="pf-streak-metric">Current: {user?.loginStreak || 0} Days</span>
+            <span className="pf-streak-metric pf-streak-metric--highlight">Next Milestone: Day {[7, 14, 21, 30].find(m => m > (user?.loginStreak || 0)) || 30}</span>
           </div>
-        ))}
+        </div>
+        <div className="pf-streak-grid">
+          {Array.from({ length: 30 }, (_, i) => i + 1).map(day => {
+            const currentStreak = user?.loginStreak || 0;
+            const isCompleted = day <= currentStreak;
+            const isCurrent = day === currentStreak + 1;
+            const isMilestone = [7, 14, 21, 30].includes(day);
+            
+            let statusClass = 'pf-streak-node--future';
+            if (isCompleted) statusClass = 'pf-streak-node--completed';
+            else if (isCurrent) statusClass = 'pf-streak-node--current';
+            
+            let tooltip = `Day ${day}`;
+            if (isCompleted) tooltip = "Goal Met!";
+            else if (isMilestone) tooltip = `Reach a ${day}-day streak to unlock a badge.`;
+
+            return (
+              <div 
+                key={day} 
+                className={`pf-streak-node ${statusClass} ${isMilestone ? 'pf-streak-node--milestone' : ''}`}
+                title={tooltip}
+              >
+                {isCompleted ? (
+                  <LuCheck className="pf-streak-icon" />
+                ) : isMilestone ? (
+                  <LuStar className="pf-streak-icon" />
+                ) : (
+                  <span className="pf-streak-day-text">{day}</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Badges Section ── */}
