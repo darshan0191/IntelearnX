@@ -16,6 +16,7 @@ import {
   LuPenLine,
   LuHistory,
   LuFileStack,
+  LuSparkles,
 } from 'react-icons/lu';
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -114,6 +115,18 @@ export default function Sidebar({ isOpen, onClose }) {
           >
             <LuHistory />
             <span>Quiz History</span>
+          </NavLink>
+        )}
+
+        {isStudent && (
+          <NavLink
+            to="/suggestions"
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={onClose}
+          >
+            <LuSparkles />
+            <span>Suggestions</span>
+            <span className="sidebar-badge">AI</span>
           </NavLink>
         )}
 

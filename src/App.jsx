@@ -22,6 +22,7 @@ import QuizHistory from './pages/QuizHistory';
 import TheoryBankGenerator from './pages/TheoryBankGenerator';
 import QuestionPaperGenerator from './pages/QuestionPaperGenerator';
 import StudentDetail from './pages/StudentDetail';
+import StudentSuggestions from './pages/StudentSuggestions';
 import SubjectSelectModal from './components/SubjectSelectModal';
 
 function ProtectedRoute({ children, roles }) {
@@ -160,6 +161,11 @@ function App() {
         <Route path="/quiz-history" element={
           <ProtectedRoute roles={['student']}>
             <QuizHistory />
+          </ProtectedRoute>
+        } />
+        <Route path="/suggestions" element={
+          <ProtectedRoute roles={['student']}>
+            <StudentSuggestions />
           </ProtectedRoute>
         } />
       </Route>

@@ -1,5 +1,4 @@
 TEAM NAME - IntelearnX 
-          1. Prasad Gavali
-          2. Yashodutt Patankar 
-          3. Virendra Naik
-          4. Darshan Mane
+          1. Darshan Kiran Mane
+          2. Arya Madan Kashid
+          3. Mitali Prabhakar Nalawade`
