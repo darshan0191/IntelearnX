@@ -1,5 +1,5 @@
 /**
- * PDF Quiz Service — OpenAI GPT-3.5 Turbo
+ * 
  * Extracts text from PDF in browser using pdf.js loaded from CDN (avoids Vite bundling issues).
  *
  * Qdrant RAG Integration:
