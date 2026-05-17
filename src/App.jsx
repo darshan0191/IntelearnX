@@ -23,6 +23,7 @@ import TheoryBankGenerator from './pages/TheoryBankGenerator';
 import QuestionPaperGenerator from './pages/QuestionPaperGenerator';
 import StudentDetail from './pages/StudentDetail';
 import StudentSuggestions from './pages/StudentSuggestions';
+import ClassReport from './pages/ClassReport';
 import SubjectSelectModal from './components/SubjectSelectModal';
 
 function ProtectedRoute({ children, roles }) {
@@ -146,6 +147,11 @@ function App() {
         <Route path="/question-paper" element={
           <ProtectedRoute roles={['educator']}>
             <QuestionPaperGenerator />
+          </ProtectedRoute>
+        } />
+        <Route path="/class-report" element={
+          <ProtectedRoute roles={['educator']}>
+            <ClassReport />
           </ProtectedRoute>
         } />
         <Route path="/educator/student/:studentId" element={

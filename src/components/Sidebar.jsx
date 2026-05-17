@@ -214,6 +214,15 @@ export default function Sidebar({ isOpen, onClose }) {
               <span>Question Papers</span>
               <span className="sidebar-badge">AI</span>
             </NavLink>
+            <NavLink
+              to="/class-report"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={onClose}
+            >
+              <LuFileText />
+              <span>Class Report</span>
+              <span className="sidebar-badge">New</span>
+            </NavLink>
           </>
         )}
       </nav>

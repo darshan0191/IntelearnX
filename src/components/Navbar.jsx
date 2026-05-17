@@ -19,6 +19,7 @@ const PAGE_TITLES = {
   '/create-quiz': 'Create Quiz',
   '/manage-quizzes': 'My Quizzes',
   '/teacher-quizzes': 'Teacher Quizzes',
+  '/class-report': 'Class Performance Report',
 };
 
 export default function Navbar({ onMenuToggle }) {

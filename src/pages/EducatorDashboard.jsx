@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getClassStudents, getStudentPerformance, getAllUsers } from '../services/storageService';
-import { LuUsers, LuTarget, LuTrendingUp, LuTriangleAlert, LuZap, LuLoader, LuBookOpen, LuSparkles, LuFileStack, LuChartColumn, LuChartLine } from 'react-icons/lu';
+import { LuUsers, LuTarget, LuTrendingUp, LuTriangleAlert, LuZap, LuLoader, LuBookOpen, LuSparkles, LuFileStack, LuChartColumn, LuChartLine, LuFileText } from 'react-icons/lu';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 import './Dashboard.css';
 
@@ -159,6 +159,15 @@ export default function EducatorDashboard() {
             <div className="action-info">
               <div className="action-name">Question Paper Set</div>
               <div className="action-desc">Generate 3 sets of exam papers</div>
+            </div>
+          </Link>
+          <Link to="/class-report" className="action-card tb-action-card">
+            <div className="action-icon" style={{ color: 'var(--accent)' }}>
+              <LuFileText />
+            </div>
+            <div className="action-info">
+              <div className="action-name">Class Report Generator</div>
+              <div className="action-desc">Activeness metrics & PDF presentation</div>
             </div>
           </Link>
         </div>

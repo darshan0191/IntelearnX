@@ -269,7 +269,9 @@ export async function saveCustomQuiz(educatorUid, quiz) {
 
 export async function getClassStudents(classCode) {
   const users = await getAllUsers();
-  return users.filter((u) => u.role === 'student' && u.classCode === classCode);
+  const normalize = (c) => (c || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+  const target = normalize(classCode);
+  return users.filter((u) => u.role === 'student' && normalize(u.classCode) === target);
 }
 
 export async function getStudentPerformance(studentId) {

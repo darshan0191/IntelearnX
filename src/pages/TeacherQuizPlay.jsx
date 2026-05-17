@@ -40,12 +40,20 @@ export default function TeacherQuizPlay() {
       try {
         const all = await getAllActiveTeacherQuizzes();
         
-        // Filter quizzes to match student's classCode
-        const studentClassCode = user?.classCode?.trim() || '';
+        // Normalize class code to strip spaces/hyphens for robust matching
+        const normalizeCode = (c) => (c || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        const studentClassCode = normalizeCode(user?.classCode);
         const filtered = all.filter(q => {
-          if (!studentClassCode) return false;
-          // Match class code (case-insensitive for robust matching)
-          return q.classCode && q.classCode.trim().toLowerCase() === studentClassCode.toLowerCase();
+          const quizClassCode = normalizeCode(q.classCode);
+          
+          // Case 1: Quiz is open to all students (empty code or explicitly 'all students')
+          if (quizClassCode === '' || quizClassCode === 'allstudents') {
+            return true;
+          }
+          
+          // Case 2: Quiz is locked to a specific class code
+          return studentClassCode === quizClassCode;
         });
 
         setQuizzes(filtered);
@@ -195,8 +203,8 @@ export default function TeacherQuizPlay() {
             <LuBookOpen />
             {!user?.classCode ? (
               <>
-                <h3>Class Code Required</h3>
-                <p>Please update your Profile with your teacher's Class Code to view and take quizzes.</p>
+                <h3>No Quizzes Available</h3>
+                <p>There are no global quizzes open to all students at this time. If your teacher has set up a locked class quiz, please update your Profile with your teacher's Class Code.</p>
                 <button className="btn btn-primary" onClick={() => navigate('/profile')} style={{ marginTop: 'var(--s4)' }}>
                   Go to Profile
                 </button>
