@@ -5,13 +5,15 @@ import {
   generateSuggestions,
   getYouTubeSearchEmbedUrl,
   youtubeSearchUrl,
+  getCourseSearchUrl,
+  getPlatformIcon,
 } from '../services/suggestionService';
 import LearningPathMermaid from '../components/LearningPathMermaid';
 import {
   LuSparkles, LuLoader, LuBookOpen, LuPlay, LuMonitor,
   LuGitBranch, LuLightbulb, LuTarget, LuTrophy, LuChevronDown,
   LuExternalLink, LuCalendar, LuTriangleAlert, LuRocket,
-  LuClock, LuFileText, LuZap, LuStar,
+  LuClock, LuFileText, LuZap, LuStar, LuGraduationCap,
 } from 'react-icons/lu';
 import './StudentSuggestions.css';
 
@@ -257,6 +259,10 @@ function SuggestionCard({ item, isNew }) {
               onClick={() => setActiveFormat('diagram')}>
               <LuGitBranch /> Diagram
             </button>
+            <button className={`ss-format-tab ${activeFormat === 'courses' ? 'active' : ''}`}
+              onClick={() => setActiveFormat('courses')}>
+              <LuGraduationCap /> Courses
+            </button>
           </div>
 
           {/* Notes */}
@@ -332,6 +338,46 @@ function SuggestionCard({ item, isNew }) {
               </div>
               {item.diagramSuggestion.description && (
                 <p className="ss-diagram-desc">{item.diagramSuggestion.description}</p>
+              )}
+            </div>
+          )}
+
+          {/* Courses */}
+          {activeFormat === 'courses' && (
+            <div className="ss-courses-section">
+              <div className="ss-courses-title"><LuGraduationCap /> Recommended Courses</div>
+              <div className="ss-courses-grid">
+                {(item.courseSuggestions || []).map((course, ci) => (
+                  <a key={ci}
+                    href={getCourseSearchUrl(course.platform, course.searchQuery)}
+                    target="_blank" rel="noopener noreferrer"
+                    className="ss-course-card">
+                    <div className="ss-course-card-header">
+                      <span className="ss-course-platform-icon">{getPlatformIcon(course.platform)}</span>
+                      <span className="ss-course-platform-name">{course.platform}</span>
+                      {course.isFree && <span className="ss-course-free-badge">Free</span>}
+                      {!course.isFree && <span className="ss-course-paid-badge">Paid</span>}
+                    </div>
+                    <h4 className="ss-course-title">{course.title}</h4>
+                    {course.instructor && (
+                      <p className="ss-course-instructor">{course.instructor}</p>
+                    )}
+                    <p className="ss-course-why">{course.why}</p>
+                    <div className="ss-course-footer">
+                      <span className={`ss-course-level ss-course-level--${(course.level || 'beginner').toLowerCase()}`}>
+                        {course.level}
+                      </span>
+                      <span className="ss-course-link-label">
+                        Open on {course.platform} <LuExternalLink />
+                      </span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+              {(!item.courseSuggestions || item.courseSuggestions.length === 0) && (
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: 'var(--s6)' }}>
+                  No specific courses recommended for this topic yet.
+                </p>
               )}
             </div>
           )}

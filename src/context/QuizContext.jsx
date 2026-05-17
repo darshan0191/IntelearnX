@@ -11,6 +11,7 @@ import {
 } from '../services/storageService';
 import { badgeDefinitions } from '../data/quizData';
 import { calculateDifficultyAdjustment } from '../services/aiService';
+import { shuffleAllQuestionOptions } from '../utils/shuffleOptions';
 
 const QuizContext = createContext(null);
 
@@ -47,7 +48,9 @@ export function QuizProvider({ children }) {
 
     // Shuffle and pick
     const shuffled = [...filteredQuestions].sort(() => Math.random() - 0.5);
-    const selected = shuffled.slice(0, Math.min(numQuestions, shuffled.length));
+    const selected = shuffleAllQuestionOptions(
+      shuffled.slice(0, Math.min(numQuestions, shuffled.length))
+    );
 
     setCurrentQuiz({
       subject,

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { RACE_QUESTIONS } from '../data/gameQuestions';
+import { RACE_QUESTIONS as RAW_RACE_QUESTIONS } from '../data/gameQuestions';
+import { shuffleAllGameQuestionOptions } from '../utils/shuffleOptions';
 import './AlgorithmRace.css';
 
-const TOTAL_Q  = RACE_QUESTIONS.length;
-const BOOST    = 100 / TOTAL_Q;       // % per correct answer
+
+const BOOST    = 100 / RAW_RACE_QUESTIONS.length; // % per correct answer
 const PENALTY  = BOOST * 0.35;        // % penalty for wrong
 const AI_SPEED = 7.5;                 // % per second — tuned so player can win
 
@@ -16,6 +17,8 @@ export default function AlgorithmRace({ onBack }) {
   const [feedback,  setFeedback]  = useState(null);
   const [winner,    setWinner]    = useState(null);
   const [answered,  setAnswered]  = useState(false);
+  const [raceQuestions, setRaceQuestions] = useState([]);
+  const TOTAL_Q = raceQuestions.length || RAW_RACE_QUESTIONS.length;
 
   const aiRafRef   = useRef(null);
   const lastTsRef  = useRef(null);
@@ -61,6 +64,9 @@ export default function AlgorithmRace({ onBack }) {
     aiPosRef.current    = 0;
     playerPosRef.current = 0;
     phaseRef.current    = 'playing';
+    // Shuffle options each play session
+    const shuffled = shuffleAllGameQuestionOptions([...RAW_RACE_QUESTIONS].sort(() => Math.random() - 0.5));
+    setRaceQuestions(shuffled);
     setPlayerPos(0); setAiPos(0);
     setQIdx(0); setScore(0);
     setFeedback(null); setWinner(null); setAnswered(false);
@@ -72,7 +78,8 @@ export default function AlgorithmRace({ onBack }) {
     if (answered || phaseRef.current !== 'playing') return;
     setAnswered(true);
 
-    const q       = RACE_QUESTIONS[qIdx];
+    const q       = raceQuestions[qIdx];
+    if (!q) return;
     const correct = option === q.answer;
 
     if (correct) {
@@ -112,7 +119,7 @@ export default function AlgorithmRace({ onBack }) {
     }, 750);
   };
 
-  const q = RACE_QUESTIONS[qIdx % TOTAL_Q];
+  const q = raceQuestions[qIdx % (TOTAL_Q || 1)];
 
   return (
     <div className="ar-root">

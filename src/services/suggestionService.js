@@ -239,6 +239,18 @@ Return ONLY valid JSON (no markdown) with this structure:
         "title": "Diagram title",
         "description": "What this diagram shows",
         "mermaidCode": "flowchart TD\\n A[Start] --> B[Concept1]\\n B --> C[Concept2]"
+      },
+      "courseSuggestions": [
+        {
+          "title": "Course title from the platform",
+          "platform": "Udemy|Coursera|NPTEL|edX|MIT OCW",
+          "instructor": "Instructor name if known",
+          "searchQuery": "exact search query to find this course on the platform",
+          "why": "Why this course helps with the weak topic",
+          "level": "Beginner|Intermediate|Advanced",
+          "isFree": true
+        }
+      ]
       }
     }
   ],
@@ -264,6 +276,18 @@ Return ONLY valid JSON (no markdown) with this structure:
         "title": "Topic overview diagram",
         "description": "Visual overview of the topic",
         "mermaidCode": "flowchart LR\\n A[Topic] --> B[Sub1]\\n A --> C[Sub2]"
+      },
+      "courseSuggestions": [
+        {
+          "title": "Beginner course for the new topic",
+          "platform": "Coursera|NPTEL|Udemy",
+          "instructor": "Instructor if known",
+          "searchQuery": "search query for the course",
+          "why": "Why this is a good starting course",
+          "level": "Beginner",
+          "isFree": true
+        }
+      ]
       }
     }
   ],
@@ -295,7 +319,12 @@ RULES:
 - YouTube search queries should be specific and include "tutorial" or "explained".
 - The conclusionVideoScript should have 4-6 scenes, each 3-6 seconds.
 - All suggestions must be engineering-related.
-- Be specific — use actual topic names, not vague descriptions.`;
+- Be specific — use actual topic names, not vague descriptions.
+- Each "courseSuggestions" array should have 2-3 courses from different platforms (Udemy, Coursera, NPTEL, edX, MIT OCW).
+- For NPTEL courses, use real NPTEL course names when possible (e.g. "Data Structures and Algorithms" by Prof. Naveen Garg, IIT Delhi).
+- For Coursera, prefer well-known university courses (Stanford, Princeton, University of Michigan, etc.).
+- "searchQuery" should be the exact text to search on that platform to find the course.
+- Set "isFree" to true for NPTEL, MIT OCW, and free Coursera/edX courses.`;
 
   const responseText = await geminiGenerate(prompt, {
     temperature: 0.4,
@@ -347,6 +376,7 @@ function buildFallbackSuggestions(aggregatedData) {
       description: `Key concepts and relationships in ${t.topic}`,
       mermaidCode: `flowchart TD\n  A[${t.topic}] --> B[Core Concepts]\n  A --> C[Practice]\n  B --> D[Theory]\n  B --> E[Applications]\n  C --> F[Easy Problems]\n  C --> G[Medium Problems]`,
     },
+    courseSuggestions: getCoursesForTopic(t.topic),
   }));
 
   const newTopicSuggestions = [
@@ -372,6 +402,7 @@ function buildFallbackSuggestions(aggregatedData) {
         description: 'Your suggested learning path forward',
         mermaidCode: 'flowchart LR\n  A[Current Knowledge] --> B[New Concepts]\n  B --> C[Practice]\n  C --> D[Mastery]',
       },
+      courseSuggestions: getCoursesForTopic(learningPath.keywords || 'Engineering'),
     },
   ];
 
@@ -405,6 +436,119 @@ function buildFallbackSuggestions(aggregatedData) {
     },
     source: 'fallback',
   };
+}
+
+// ─── Course Platform Utilities ───
+
+/** Curated course bank keyed by broad topic area. */
+const COURSE_BANK = {
+  'Data Structures': [
+    { title: 'Data Structures and Algorithms', platform: 'NPTEL', instructor: 'Prof. Naveen Garg, IIT Delhi', searchQuery: 'NPTEL Data Structures and Algorithms', why: 'Comprehensive IIT-level coverage of all core data structures', level: 'Intermediate', isFree: true },
+    { title: 'Algorithms Specialization', platform: 'Coursera', instructor: 'Tim Roughgarden, Stanford', searchQuery: 'Coursera Algorithms Stanford', why: 'World-class Stanford course covering algorithm design paradigms', level: 'Intermediate', isFree: false },
+    { title: 'Mastering Data Structures & Algorithms using C and C++', platform: 'Udemy', instructor: 'Abdul Bari', searchQuery: 'Udemy Abdul Bari Data Structures', why: 'Highly rated practical course with animations and examples', level: 'Beginner', isFree: false },
+  ],
+  'Algorithms': [
+    { title: 'Design and Analysis of Algorithms', platform: 'NPTEL', instructor: 'Prof. Madhavan Mukund, CMI', searchQuery: 'NPTEL Design Analysis Algorithms', why: 'Rigorous algorithm analysis from a top Indian institution', level: 'Intermediate', isFree: true },
+    { title: 'Algorithms, Part I & II', platform: 'Coursera', instructor: 'Robert Sedgewick, Princeton', searchQuery: 'Coursera Algorithms Princeton Sedgewick', why: 'Classic Princeton course with excellent visualizations', level: 'Intermediate', isFree: false },
+    { title: 'Introduction to Algorithms', platform: 'MIT OCW', instructor: 'MIT 6.006', searchQuery: 'MIT OCW 6.006 Introduction to Algorithms', why: 'MIT\'s legendary algorithms course — free and rigorous', level: 'Advanced', isFree: true },
+  ],
+  'Database': [
+    { title: 'Database Management System', platform: 'NPTEL', instructor: 'Prof. Partha Pratim Das, IIT Kharagpur', searchQuery: 'NPTEL Database Management System', why: 'Complete DBMS course from IIT with SQL and normalization', level: 'Intermediate', isFree: true },
+    { title: 'Databases and SQL for Data Science', platform: 'Coursera', instructor: 'IBM', searchQuery: 'Coursera Databases SQL IBM', why: 'Practical SQL skills with hands-on labs from IBM', level: 'Beginner', isFree: false },
+    { title: 'The Complete SQL Bootcamp', platform: 'Udemy', instructor: 'Jose Portilla', searchQuery: 'Udemy Complete SQL Bootcamp Jose Portilla', why: 'Best-selling practical SQL course with real-world exercises', level: 'Beginner', isFree: false },
+  ],
+  'Operating Systems': [
+    { title: 'Introduction to Operating Systems', platform: 'NPTEL', instructor: 'Prof. Chester Rebeiro, IIT Madras', searchQuery: 'NPTEL Introduction Operating Systems', why: 'Covers processes, scheduling, memory management — IIT quality', level: 'Intermediate', isFree: true },
+    { title: 'Operating Systems: Three Easy Pieces', platform: 'edX', instructor: 'University of Wisconsin', searchQuery: 'edX Operating Systems Three Easy Pieces', why: 'Based on the popular OSTEP textbook — concurrency and persistence', level: 'Intermediate', isFree: true },
+    { title: 'Operating Systems and System Programming', platform: 'MIT OCW', instructor: 'MIT 6.828', searchQuery: 'MIT OCW 6.828 Operating Systems', why: 'Deep dive into OS internals from MIT', level: 'Advanced', isFree: true },
+  ],
+  'Computer Networks': [
+    { title: 'Computer Networks', platform: 'NPTEL', instructor: 'Prof. Sujoy Ghosh, IIT Kharagpur', searchQuery: 'NPTEL Computer Networks', why: 'Covers TCP/IP, routing, and network protocols in depth', level: 'Intermediate', isFree: true },
+    { title: 'The Bits and Bytes of Computer Networking', platform: 'Coursera', instructor: 'Google', searchQuery: 'Coursera Computer Networking Google', why: 'Google\'s practical networking course — beginner-friendly', level: 'Beginner', isFree: false },
+    { title: 'Computer Networking: A Top-Down Approach', platform: 'Udemy', instructor: 'Based on Kurose/Ross textbook', searchQuery: 'Udemy Computer Networking top down', why: 'Application-layer-first approach — very intuitive', level: 'Beginner', isFree: false },
+  ],
+  'Machine Learning': [
+    { title: 'Machine Learning', platform: 'Coursera', instructor: 'Andrew Ng, Stanford', searchQuery: 'Coursera Machine Learning Andrew Ng', why: 'The gold standard ML course by Andrew Ng — legendary', level: 'Beginner', isFree: false },
+    { title: 'Introduction to Machine Learning', platform: 'NPTEL', instructor: 'Prof. Sudeshna Sarkar, IIT Kharagpur', searchQuery: 'NPTEL Machine Learning Sudeshna Sarkar', why: 'Comprehensive ML course covering regression to deep learning', level: 'Intermediate', isFree: true },
+    { title: 'Machine Learning A-Z', platform: 'Udemy', instructor: 'Kirill Eremenko', searchQuery: 'Udemy Machine Learning A-Z', why: 'Hands-on ML with Python and R — great for practical skills', level: 'Beginner', isFree: false },
+  ],
+  'Programming': [
+    { title: 'Programming, Data Structures and Algorithms Using Python', platform: 'NPTEL', instructor: 'Prof. Madhavan Mukund, CMI', searchQuery: 'NPTEL Programming Python Madhavan Mukund', why: 'Combines programming fundamentals with algorithmic thinking', level: 'Beginner', isFree: true },
+    { title: 'Python for Everybody Specialization', platform: 'Coursera', instructor: 'Dr. Charles Severance, U-Michigan', searchQuery: 'Coursera Python for Everybody', why: 'One of the most popular beginner programming courses worldwide', level: 'Beginner', isFree: false },
+    { title: 'CS50: Introduction to Computer Science', platform: 'edX', instructor: 'David Malan, Harvard', searchQuery: 'edX CS50 Harvard', why: 'Harvard\'s iconic CS intro course — engaging and rigorous', level: 'Beginner', isFree: true },
+  ],
+  'Web Development': [
+    { title: 'The Complete Web Developer Course', platform: 'Udemy', instructor: 'Dr. Angela Yu', searchQuery: 'Udemy Complete Web Developer Angela Yu', why: 'Full-stack web development — HTML, CSS, JS, React, Node', level: 'Beginner', isFree: false },
+    { title: 'Full-Stack Web Development with React', platform: 'Coursera', instructor: 'HKUST', searchQuery: 'Coursera Full Stack React HKUST', why: 'React-focused full-stack course from Hong Kong UST', level: 'Intermediate', isFree: false },
+    { title: 'Web Development', platform: 'MIT OCW', instructor: 'MIT 6.148', searchQuery: 'MIT OCW web development', why: 'MIT\'s web development fundamentals — free and structured', level: 'Beginner', isFree: true },
+  ],
+  'Software Engineering': [
+    { title: 'Software Engineering', platform: 'NPTEL', instructor: 'Prof. Rajib Mall, IIT Kharagpur', searchQuery: 'NPTEL Software Engineering Rajib Mall', why: 'Complete SE lifecycle — SDLC, testing, design patterns', level: 'Intermediate', isFree: true },
+    { title: 'Software Design and Architecture', platform: 'Coursera', instructor: 'University of Alberta', searchQuery: 'Coursera Software Design Architecture Alberta', why: 'Covers design patterns, architecture styles, and UML', level: 'Intermediate', isFree: false },
+    { title: 'Software Engineering Essentials', platform: 'edX', instructor: 'TU Munich', searchQuery: 'edX Software Engineering Essentials TU Munich', why: 'Practical SE with agile methods and modern tools', level: 'Beginner', isFree: true },
+  ],
+  'Electronics': [
+    { title: 'Analog Electronic Circuits', platform: 'NPTEL', instructor: 'Prof. Pradip Mandal, IIT Kharagpur', searchQuery: 'NPTEL Analog Electronics', why: 'Covers BJT, MOSFET, op-amps — essential for ECE', level: 'Intermediate', isFree: true },
+    { title: 'Circuits and Electronics', platform: 'edX', instructor: 'MIT 6.002', searchQuery: 'edX Circuits Electronics MIT', why: 'MIT\'s foundational electronics course — well structured', level: 'Beginner', isFree: true },
+    { title: 'Master Analog Electronics', platform: 'Udemy', instructor: 'Various', searchQuery: 'Udemy Analog Electronics complete course', why: 'Practical analog circuit design and analysis', level: 'Beginner', isFree: false },
+  ],
+  'default': [
+    { title: 'Problem Solving Through Programming in C', platform: 'NPTEL', instructor: 'Prof. Anupam Basu, IIT Kharagpur', searchQuery: 'NPTEL Problem Solving Programming C', why: 'Strong foundation in programming logic and problem solving', level: 'Beginner', isFree: true },
+    { title: 'Learning How to Learn', platform: 'Coursera', instructor: 'Dr. Barbara Oakley, McMaster University', searchQuery: 'Coursera Learning How to Learn', why: 'Meta-learning skills that boost performance in any subject', level: 'Beginner', isFree: true },
+    { title: 'Engineering Mathematics', platform: 'NPTEL', instructor: 'Prof. Jitender Kumar, IIT Kharagpur', searchQuery: 'NPTEL Engineering Mathematics', why: 'Core math skills needed across all engineering domains', level: 'Beginner', isFree: true },
+  ],
+};
+
+/** Match a topic string to the best course bank key. */
+function matchCourseBankKey(topic) {
+  const t = (topic || '').toLowerCase();
+  const mappings = [
+    { keys: ['data structure', 'dsa', 'linked list', 'stack', 'queue', 'tree', 'heap', 'array', 'hashing'], bank: 'Data Structures' },
+    { keys: ['algorithm', 'sorting', 'searching', 'dynamic programming', 'greedy', 'graph', 'bfs', 'dfs', 'complexity'], bank: 'Algorithms' },
+    { keys: ['database', 'dbms', 'sql', 'normalization', 'relational', 'nosql', 'query'], bank: 'Database' },
+    { keys: ['operating system', 'process', 'scheduling', 'deadlock', 'memory management', 'paging'], bank: 'Operating Systems' },
+    { keys: ['network', 'tcp', 'ip', 'routing', 'osi', 'http', 'dns', 'socket'], bank: 'Computer Networks' },
+    { keys: ['machine learning', 'ml', 'deep learning', 'neural', 'regression', 'classification', 'ai', 'artificial intelligence'], bank: 'Machine Learning' },
+    { keys: ['programming', 'python', 'java', 'c++', 'coding', 'oop', 'object oriented'], bank: 'Programming' },
+    { keys: ['web', 'html', 'css', 'javascript', 'react', 'node', 'frontend', 'backend', 'full stack'], bank: 'Web Development' },
+    { keys: ['software engineering', 'sdlc', 'testing', 'design pattern', 'agile', 'devops', 'uml'], bank: 'Software Engineering' },
+    { keys: ['electronics', 'circuit', 'vlsi', 'embedded', 'signal', 'analog', 'digital', 'ece', 'semiconductor'], bank: 'Electronics' },
+  ];
+  for (const m of mappings) {
+    if (m.keys.some(k => t.includes(k))) return m.bank;
+  }
+  return 'default';
+}
+
+/** Get curated courses for a topic from the bank. */
+function getCoursesForTopic(topic) {
+  const key = matchCourseBankKey(topic);
+  return (COURSE_BANK[key] || COURSE_BANK['default']).slice(0, 3);
+}
+
+/** Build a search URL for a specific platform. */
+export function getCourseSearchUrl(platform, query) {
+  const q = encodeURIComponent(query);
+  switch ((platform || '').toLowerCase()) {
+    case 'udemy': return `https://www.udemy.com/courses/search/?q=${q}`;
+    case 'coursera': return `https://www.coursera.org/search?query=${q}`;
+    case 'nptel': return `https://nptel.ac.in/courses?q=${q}`;
+    case 'edx': return `https://www.edx.org/search?q=${q}`;
+    case 'mit ocw': return `https://ocw.mit.edu/search/?q=${q}`;
+    default: return `https://www.google.com/search?q=${q}+course`;
+  }
+}
+
+/** Get platform logo/icon emoji. */
+export function getPlatformIcon(platform) {
+  switch ((platform || '').toLowerCase()) {
+    case 'udemy': return '🟣';
+    case 'coursera': return '🔵';
+    case 'nptel': return '🟠';
+    case 'edx': return '🔴';
+    case 'mit ocw': return '🔶';
+    default: return '📚';
+  }
 }
 
 // ─── YouTube Utilities ───

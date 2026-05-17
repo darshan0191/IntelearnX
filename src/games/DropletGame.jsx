@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { DSA_QUESTIONS } from '../data/gameQuestions';
+import { shuffleGameQuestionOptions } from '../utils/shuffleOptions';
 import './DropletGame.css';
 
 const LIVES     = 3;
@@ -42,7 +43,8 @@ export default function DropletGame({ onBack }) {
   const spawnRound = useCallback((lvl) => {
     const usedSet = new Set();
     const pool = DSA_QUESTIONS.filter((_, i) => !usedSet.has(i));
-    const pick  = pool[Math.floor(Math.random() * pool.length)];
+    const rawPick  = pool[Math.floor(Math.random() * pool.length)];
+    const pick = shuffleGameQuestionOptions(rawPick);
     const count = Math.min(4 + lvl - 1, 6);
     const opts  = shuffle([pick.answer, ...pick.options.filter(o => o !== pick.answer)]).slice(0, count);
     const slotW = 680 / count;

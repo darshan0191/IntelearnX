@@ -11,6 +11,7 @@ import quizData from '../data/quizData.js';
 import { isVectorDbConfigured, searchQuizKnowledge, storeQuizKnowledge } from './vectorService';
 import { geminiGenerate, geminiGenerateSafe, isGeminiConfigured, isInCooldown } from './openaiClient';
 import { validateEngineeringDomain, OUT_OF_DOMAIN_SHORT } from '../utils/engineeringDomainGuard';
+import { shuffleQuestionOptions } from '../utils/shuffleOptions';
 
 const LIBRARY_SUBJECT_NAMES = Object.keys(quizData);
 
@@ -66,7 +67,7 @@ function normalizeQuestions(rawList, domainLabels) {
       domain = domainLabels[i % domainLabels.length];
     }
 
-    return {
+    return shuffleQuestionOptions({
       id: q.id || `pq-${i + 1}`,
       domain,
       question: String(q.question || '').trim(),
@@ -74,7 +75,7 @@ function normalizeQuestions(rawList, domainLabels) {
       correct,
       explanation: String(q.explanation || 'Review this concept and try similar questions.'),
       difficulty: q.difficulty || 'medium',
-    };
+    });
   });
 }
 
@@ -157,7 +158,7 @@ function buildFallbackQuiz(domainLabels, keywords) {
     if (keywords && keywords.length > 2) {
       base.question = `${base.question} (Your focus: ${keywords.slice(0, 80)}.)`;
     }
-    picked.push(base);
+    picked.push(shuffleQuestionOptions(base));
   }
   return picked;
 }

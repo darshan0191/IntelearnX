@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { SQL_QUESTIONS } from '../data/gameQuestions';
+import { SQL_QUESTIONS as RAW_SQL_QUESTIONS } from '../data/gameQuestions';
+import { shuffleGameQuestionOptions } from '../utils/shuffleOptions';
 import './SQLShooter.css';
 
 const ROUND_TIME   = 18;
-const TOTAL_ROUNDS = SQL_QUESTIONS.length;
 
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
 
@@ -14,7 +14,9 @@ export default function SQLShooter({ onBack }) {
   const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
   const [targets,  setTargets]  = useState([]);
   const [question, setQuestion] = useState(null);
-  const [shotFx,   setShotFx]   = useState(null); // { correct, x, y }
+  const [shotFx,   setShotFx]   = useState(null);
+  const [gameQuestions, setGameQuestions] = useState([]);
+  const TOTAL_ROUNDS = gameQuestions.length || RAW_SQL_QUESTIONS.length;
 
   const rafRef     = useRef(null);
   const timerRef   = useRef(null);
@@ -41,7 +43,7 @@ export default function SQLShooter({ onBack }) {
   const ARENA_H = 320;
 
   const spawnRound = useCallback((idx) => {
-    const q    = SQL_QUESTIONS[idx % SQL_QUESTIONS.length];
+    const q    = shuffleGameQuestionOptions(gameQuestions[idx % (gameQuestions.length || 1)] || RAW_SQL_QUESTIONS[idx % RAW_SQL_QUESTIONS.length]);
     const opts = shuffle(q.options).slice(0, 5);
     const rowH = ARENA_H / opts.length;
 
@@ -62,7 +64,7 @@ export default function SQLShooter({ onBack }) {
     targetsRef.current = newTargets;
     timeRef.current = ROUND_TIME;
     setTimeLeft(ROUND_TIME);
-  }, []);
+  }, [gameQuestions]);
 
   const runLoop = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -137,11 +139,30 @@ export default function SQLShooter({ onBack }) {
     roundRef.current = 0;
     scoreRef.current = 0;
     phaseRef.current = 'playing';
+    // Shuffle questions and options each play session
+    const shuffled = [...RAW_SQL_QUESTIONS].sort(() => Math.random() - 0.5).map(shuffleGameQuestionOptions);
+    setGameQuestions(shuffled);
     setRound(0); setScore(0); setShotFx(null);
     setPhase('playing');
-    spawnRound(0);
-    runLoop();
-    startCountdown();
+    // Spawn first round after state update
+    setTimeout(() => {
+      const q0 = shuffleGameQuestionOptions(shuffled[0]);
+      const opts = shuffle(q0.options).slice(0, 5);
+      const rowH = ARENA_H / opts.length;
+      const newTargets = opts.map((text, i) => ({
+        id: i, text, correct: text === q0.answer,
+        x: Math.random() * (ARENA_W - 240), y: rowH * i + rowH / 2 - 18,
+        speed: 0.9 + Math.random() * 0.8, dir: Math.random() > 0.5 ? 1 : -1,
+        hit: false, flash: null,
+      }));
+      setQuestion(q0);
+      setTargets(newTargets);
+      targetsRef.current = newTargets;
+      timeRef.current = ROUND_TIME;
+      setTimeLeft(ROUND_TIME);
+      runLoop();
+      startCountdown();
+    }, 0);
   };
 
   const handleShoot = (target, e) => {
