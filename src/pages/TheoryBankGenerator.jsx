@@ -118,6 +118,85 @@ export default function TheoryBankGenerator() {
     }
   };
 
+  // ── Download as PDF ──
+  const handleDownloadPdf = (includeAnswers = false) => {
+    if (!result) return;
+    const printWindow = window.open('', '_blank');
+    const title = includeAnswers ? 'Theory Question Bank (Solution Key)' : 'Theory Question Bank (Examination)';
+    
+    // Construct HTML questions
+    const questionsHtml = result.questions.map((q) => `
+      <div class="q-item">
+        <div class="q-header">
+          <span class="q-number">Question ${q.id}</span>
+          <span class="q-meta">[Topic: ${q.topic} | Difficulty: ${q.difficulty.toUpperCase()} | Marks: ${q.marks}]</span>
+        </div>
+        <p class="q-text">${q.question}</p>
+        ${includeAnswers ? `
+          <div class="ans-block">
+            <strong>Expected Answer / Solution Key:</strong>
+            <p>${q.expectedAnswer}</p>
+          </div>
+        ` : ''}
+      </div>
+    `).join('');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${title}</title>
+          <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: 'Times New Roman', Georgia, serif; line-height: 1.5; color: black; padding: 0.5in; background: white; }
+            
+            /* Educational Header */
+            .exam-header { text-align: center; border-bottom: 3px double black; padding-bottom: 12px; margin-bottom: 20pt; }
+            .exam-header h1 { font-size: 18pt; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+            .exam-header h2 { font-size: 12pt; font-weight: 600; color: #333; margin-bottom: 6px; }
+            .exam-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 10pt; text-align: left; margin-top: 10px; border-top: 1px solid #ddd; padding-top: 8px; }
+            
+            /* Questions */
+            .q-item { margin-bottom: 18pt; page-break-inside: avoid; }
+            .q-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 0.5px solid #bbb; padding-bottom: 2px; margin-bottom: 6px; font-size: 10pt; }
+            .q-number { font-size: 10.5pt; }
+            .q-meta { font-size: 8.5pt; font-style: italic; color: #444; }
+            .q-text { font-size: 11pt; text-align: justify; margin-top: 4px; }
+            
+            /* Answers Solution block */
+            .ans-block { margin-top: 8px; padding: 10px; border-left: 3px solid black; background: #f9f9f9; font-size: 10pt; }
+            .ans-block strong { font-size: 9pt; text-transform: uppercase; color: #111; display: block; margin-bottom: 4px; }
+            .ans-block p { text-align: justify; line-height: 1.4; color: #222; }
+            
+            @media print {
+              body { padding: 0; }
+              @page { size: A4 portrait; margin: 0.5in; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="exam-header">
+            <h1>IntelearnX Assessment Platform</h1>
+            <h2>${includeAnswers ? 'Theory Question Bank (Official Solution Key)' : 'Theory Assessment (Examination Paper)'}</h2>
+            <div class="exam-meta-grid">
+              <div><strong>Generated From:</strong> ${result.sourceFiles.map(f => f.name).join(', ')}</div>
+              <div><strong>Total Questions:</strong> ${result.totalGenerated}</div>
+              <div><strong>Subject Category:</strong> Theory Question Bank</div>
+              <div><strong>Date Generated:</strong> ${new Date().toLocaleDateString()}</div>
+            </div>
+          </div>
+          <div class="question-container">
+            ${questionsHtml}
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 500);
+  };
+
   // ── Download as Text ──
   const handleDownloadTxt = () => {
     if (!result) return;
@@ -304,6 +383,12 @@ export default function TheoryBankGenerator() {
           <div className="tb-actions">
             <button className="btn btn-primary" onClick={handleCopyAll}>
               {copied ? <><LuCheck /> Copied!</> : <><LuClipboard /> Copy All</>}
+            </button>
+            <button className="btn btn-secondary" onClick={() => handleDownloadPdf(false)}>
+              <LuDownload /> Download PDF (Exam)
+            </button>
+            <button className="btn btn-secondary" onClick={() => handleDownloadPdf(true)}>
+              <LuDownload /> Download PDF (Solution Key)
             </button>
             <button className="btn btn-secondary" onClick={handleDownloadTxt}>
               <LuDownload /> Download .txt

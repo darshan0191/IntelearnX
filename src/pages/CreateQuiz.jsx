@@ -125,6 +125,7 @@ export default function CreateQuiz() {
         questionCount: questions.length,
         questions,
         educatorName: user.name,
+        classCode: user.classCode || '',
       });
       setSuccess(true);
       setTimeout(() => navigate('/manage-quizzes'), 1500);

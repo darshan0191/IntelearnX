@@ -39,11 +39,20 @@ export default function TeacherQuizPlay() {
     (async () => {
       try {
         const all = await getAllActiveTeacherQuizzes();
-        setQuizzes(all);
+        
+        // Filter quizzes to match student's classCode
+        const studentClassCode = user?.classCode?.trim() || '';
+        const filtered = all.filter(q => {
+          if (!studentClassCode) return false;
+          // Match class code (case-insensitive for robust matching)
+          return q.classCode && q.classCode.trim().toLowerCase() === studentClassCode.toLowerCase();
+        });
+
+        setQuizzes(filtered);
 
         // Check which quizzes the student already submitted
         const subMap = {};
-        for (const q of all) {
+        for (const q of filtered) {
           const sub = await getStudentSubmission(q.id, user.id);
           if (sub) subMap[q.id] = sub;
         }
@@ -184,8 +193,20 @@ export default function TeacherQuizPlay() {
         {quizzes.length === 0 ? (
           <div className="tqp-empty">
             <LuBookOpen />
-            <h3>No quizzes available</h3>
-            <p>Your teachers haven't created any quizzes yet. Check back later!</p>
+            {!user?.classCode ? (
+              <>
+                <h3>Class Code Required</h3>
+                <p>Please update your Profile with your teacher's Class Code to view and take quizzes.</p>
+                <button className="btn btn-primary" onClick={() => navigate('/profile')} style={{ marginTop: 'var(--s4)' }}>
+                  Go to Profile
+                </button>
+              </>
+            ) : (
+              <>
+                <h3>No quizzes available</h3>
+                <p>Your teacher hasn't created any active quizzes for Class {user.classCode} yet.</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="tqp-quiz-grid">

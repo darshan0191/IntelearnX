@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LuLayoutDashboard,
@@ -21,6 +21,7 @@ import {
 
 export default function Sidebar({ isOpen, onClose }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isStudent = user?.role === 'student';
 
   return (
@@ -218,7 +219,14 @@ export default function Sidebar({ isOpen, onClose }) {
       </nav>
 
       {/* Footer */}
-      <div className="sidebar-footer">
+      <div 
+        className="sidebar-footer" 
+        onClick={() => {
+          navigate('/profile');
+          onClose?.();
+        }}
+        title="View & Edit Profile Settings"
+      >
         <div className="sidebar-avatar">{user?.avatar || '🧑‍🎓'}</div>
         <div className="sidebar-user-info">
           <div className="sidebar-user-name">{user?.name}</div>

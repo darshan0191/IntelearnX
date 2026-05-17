@@ -1121,3 +1121,61 @@
   }
 }
 
+/* ⚠️ Class Code Warning Security Banner */
+.class-code-warning-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--s5);
+  padding: var(--s5) var(--s6);
+  background: linear-gradient(135deg, rgba(224, 165, 70, 0.08) 0%, rgba(18, 18, 18, 0.85) 100%);
+  border: 1px solid rgba(224, 165, 70, 0.25);
+  border-radius: var(--r-xl);
+  margin-bottom: var(--s8);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  animation: fadeIn var(--dur-base) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+.class-code-warning-banner::before {
+  content: '';
+  position: absolute; top: 0; left: 0; bottom: 0; width: 4px;
+  background: #E0A546;
+  opacity: 0.8;
+}
+.warning-banner-icon {
+  font-size: 1.8rem;
+  color: #E0A546;
+  flex-shrink: 0;
+}
+.warning-banner-body {
+  flex: 1;
+}
+.warning-banner-body h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #E0A546;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.01em;
+}
+.warning-banner-body p {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+.class-code-warning-banner .btn {
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(224, 165, 70, 0.15);
+}
+
+@media (max-width: 640px) {
+  .class-code-warning-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s4);
+  }
+  .class-code-warning-banner .btn {
+    width: 100%;
+  }
+}
+

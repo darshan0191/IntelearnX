@@ -244,36 +244,49 @@ export default function Profile() {
 
           {/* Institution */}
           <div className="pf-detail-card">
-            <div className="pf-detail-label"><LuBuilding2 /> Institution</div>
+            <div className="pf-detail-label">
+              <LuBuilding2 /> {user?.role === 'educator' ? 'Affiliated College / School' : 'Institution'}
+            </div>
             {editing ? (
               <input
                 className="pf-edit-input"
                 value={editForm.institution}
                 onChange={e => updateField('institution', e.target.value)}
-                placeholder="e.g. IIT Bombay"
+                placeholder={user?.role === 'educator' ? 'e.g. Harvard University' : 'e.g. IIT Bombay'}
               />
             ) : (
               <div className="pf-detail-value">{user?.institution || <span className="pf-empty-hint">—</span>}</div>
             )}
           </div>
 
-          {/* Year of Study */}
+          {/* Year of Study / Designation */}
           <div className="pf-detail-card">
-            <div className="pf-detail-label"><LuGraduationCap /> Year of Study</div>
+            <div className="pf-detail-label">
+              <LuGraduationCap /> {user?.role === 'educator' ? 'Qualifications / Designation' : 'Year of Study'}
+            </div>
             {editing ? (
-              <select
-                className="pf-edit-select"
-                value={editForm.yearOfStudy}
-                onChange={e => updateField('yearOfStudy', e.target.value)}
-              >
-                <option value="">Select year</option>
-                <option value="1st Year">1st Year</option>
-                <option value="2nd Year">2nd Year</option>
-                <option value="3rd Year">3rd Year</option>
-                <option value="4th Year">4th Year</option>
-                <option value="Postgraduate">Postgraduate</option>
-                <option value="Other">Other</option>
-              </select>
+              user?.role === 'educator' ? (
+                <input
+                  className="pf-edit-input"
+                  value={editForm.yearOfStudy}
+                  onChange={e => updateField('yearOfStudy', e.target.value)}
+                  placeholder="e.g. M.Tech, Assistant Professor"
+                />
+              ) : (
+                <select
+                  className="pf-edit-select"
+                  value={editForm.yearOfStudy}
+                  onChange={e => updateField('yearOfStudy', e.target.value)}
+                >
+                  <option value="">Select year</option>
+                  <option value="1st Year">1st Year</option>
+                  <option value="2nd Year">2nd Year</option>
+                  <option value="3rd Year">3rd Year</option>
+                  <option value="4th Year">4th Year</option>
+                  <option value="Postgraduate">Postgraduate</option>
+                  <option value="Other">Other</option>
+                </select>
+              )
             ) : (
               <div className="pf-detail-value">{user?.yearOfStudy || <span className="pf-empty-hint">—</span>}</div>
             )}
@@ -281,7 +294,9 @@ export default function Profile() {
 
           {/* Class Code */}
           <div className="pf-detail-card">
-            <div className="pf-detail-label"><LuHash /> Class Code</div>
+            <div className="pf-detail-label">
+              <LuHash /> {user?.role === 'educator' ? 'My Classroom Code' : 'Class Code'}
+            </div>
             {editing ? (
               <input
                 className="pf-edit-input"
@@ -294,15 +309,17 @@ export default function Profile() {
             )}
           </div>
 
-          {/* Study Interests */}
+          {/* Study Interests / Subjects Taught */}
           <div className="pf-detail-card pf-detail-card--wide">
-            <div className="pf-detail-label"><LuBookOpen /> Study Interests</div>
+            <div className="pf-detail-label">
+              <LuBookOpen /> {user?.role === 'educator' ? 'Subjects Taught' : 'Study Interests'}
+            </div>
             {editing ? (
               <input
                 className="pf-edit-input"
                 value={editForm.studyInterests}
                 onChange={e => updateField('studyInterests', e.target.value)}
-                placeholder="e.g. Machine Learning, Web Development, DSA"
+                placeholder={user?.role === 'educator' ? 'e.g. Python Programming, Data Structures, Operating Systems' : 'e.g. Machine Learning, Web Development, DSA'}
               />
             ) : (
               <div className="pf-detail-value">
@@ -313,7 +330,9 @@ export default function Profile() {
                     ))}
                   </div>
                 ) : (
-                  <span className="pf-empty-hint">No interests added yet</span>
+                  <span className="pf-empty-hint">
+                    {user?.role === 'educator' ? 'No subjects registered yet' : 'No interests added yet'}
+                  </span>
                 )}
               </div>
             )}

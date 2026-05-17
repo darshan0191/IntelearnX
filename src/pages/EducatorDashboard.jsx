@@ -124,6 +124,19 @@ export default function EducatorDashboard() {
         </div>
       </div>
 
+      {!user?.classCode && (
+        <div className="class-code-warning-banner animate-fadeIn">
+          <div className="warning-banner-icon">⚠️</div>
+          <div className="warning-banner-body">
+            <h4>Class Code Required for Security</h4>
+            <p>You have not configured a Class Code yet. Without a Class Code, your custom quizzes will be accessible to all students globally. Setting a Class Code restricts access to only students who belong to your specific class, preventing interruptions from unauthorized users.</p>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => navigate('/profile')}>
+            Set Class Code
+          </button>
+        </div>
+      )}
+
       {/* Quick Actions */}
       <div className="educator-actions animate-fadeInUp">
         <h3 className="section-title">
