@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import {
   aggregateStudentData,
   generateSuggestions,
-  getYouTubeSearchEmbedUrl,
   youtubeSearchUrl,
   getCourseSearchUrl,
   getPlatformIcon,
@@ -299,15 +298,23 @@ function SuggestionCard({ item, isNew }) {
             <div className="ss-video-section">
               <div className="ss-video-section-title"><LuPlay /> {item.videoSuggestion.videoTitle}</div>
 
-              {/* Embedded YouTube player with search query */}
-              <div className="ss-video-embed-wrap">
-                <iframe
-                  src={getYouTubeSearchEmbedUrl(item.videoSuggestion.youtubeSearchQuery)}
-                  title={item.videoSuggestion.videoTitle}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
+              {/* YouTube video link card */}
+              <a
+                href={youtubeSearchUrl(item.videoSuggestion.youtubeSearchQuery)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ss-yt-video-link-card"
+              >
+                <div className="ss-yt-video-link-icon">
+                  <LuPlay />
+                </div>
+                <div className="ss-yt-video-link-info">
+                  <span className="ss-yt-video-link-title">{item.videoSuggestion.videoTitle}</span>
+                  <span className="ss-yt-video-link-subtitle">
+                    Watch on YouTube <LuExternalLink />
+                  </span>
+                </div>
+              </a>
 
               <div className="ss-video-meta">
                 {item.videoSuggestion.watchDuration && (
@@ -318,13 +325,6 @@ function SuggestionCard({ item, isNew }) {
                 <span className="ss-video-meta-item">
                   <LuLightbulb /> {item.videoSuggestion.whyWatch}
                 </span>
-              </div>
-
-              <div style={{ marginTop: 'var(--s3)' }}>
-                <a href={youtubeSearchUrl(item.videoSuggestion.youtubeSearchQuery)}
-                  target="_blank" rel="noopener noreferrer" className="ss-yt-search-link">
-                  <LuExternalLink /> Browse more videos on YouTube
-                </a>
               </div>
             </div>
           )}
