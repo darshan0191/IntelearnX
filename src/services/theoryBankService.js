@@ -19,6 +19,7 @@ import { validateEngineeringDomain, OUT_OF_DOMAIN_SHORT } from '../utils/enginee
 const PDFJS_VERSION = '3.11.174';
 const PDFJS_CDN = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
 
+//Instead of installing a heavy PDF library, we dynamically load PDF.js from CDN, which improves performance and reduces bundle size.
 async function loadPdfJs() {
   if (window.pdfjsLib) return window.pdfjsLib;
 

@@ -79,8 +79,6 @@ export async function getAllActiveTeacherQuizzes() {
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
-// ─── Submissions (Student) ─────────────────────────────────────
-
 /**
  * Submit a student's answers to a teacher quiz.
  */
